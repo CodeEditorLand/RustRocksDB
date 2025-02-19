@@ -9,12 +9,17 @@ use regex::Regex;
 
 fn link(name:&str, bundled:bool) {
 	use std::env::var;
+
 	let target = var("TARGET").unwrap();
+
 	let target:Vec<_> = target.split('-').collect();
+
 	if target.get(2) == Some(&"windows") {
 		println!("cargo:rustc-link-lib=dylib={name}");
+
 		if bundled && target.get(3) == Some(&"gnu") {
 			let dir = var("CARGO_MANIFEST_DIR").unwrap();
+
 			println!("cargo:rustc-link-search=native={}/{}", dir, target[0]);
 		}
 	}
@@ -23,7 +28,9 @@ fn link(name:&str, bundled:bool) {
 fn fail_on_empty_directory(name:&str) {
 	if fs::read_dir(name).unwrap().count() == 0 {
 		println!("The `{name}` directory is empty, did you forget to pull the submodules?");
+
 		println!("Try `git submodule update --init --recursive`");
+
 		panic!();
 	}
 }
@@ -91,17 +98,22 @@ fn build_rocksdb() {
 	let target = env::var("TARGET").unwrap();
 
 	let mut config = cc::Build::new();
+
 	config.include("rocksdb/include/");
+
 	config.include("rocksdb/");
+
 	config.include("rocksdb/third-party/gtest-1.8.1/fused-src/");
 
 	if cfg!(feature = "snappy") {
 		config.define("SNAPPY", Some("1"));
+
 		config.include("snappy/");
 	}
 
 	if cfg!(feature = "lz4") {
 		config.define("LZ4", Some("1"));
+
 		if let Some(path) = env::var_os("DEP_LZ4_INCLUDE") {
 			config.include(path);
 		}
@@ -109,6 +121,7 @@ fn build_rocksdb() {
 
 	if cfg!(feature = "zstd") {
 		config.define("ZSTD", Some("1"));
+
 		if let Some(path) = env::var_os("DEP_ZSTD_INCLUDE") {
 			config.include(path);
 		}
@@ -116,6 +129,7 @@ fn build_rocksdb() {
 
 	if cfg!(feature = "zlib") {
 		config.define("ZLIB", Some("1"));
+
 		if let Some(path) = env::var_os("DEP_Z_INCLUDE") {
 			config.include(path);
 		}
@@ -123,6 +137,7 @@ fn build_rocksdb() {
 
 	if cfg!(feature = "bzip2") {
 		config.define("BZIP2", Some("1"));
+
 		if let Some(path) = env::var_os("DEP_BZIP2_INCLUDE") {
 			config.include(path);
 		}
@@ -135,6 +150,7 @@ fn build_rocksdb() {
 	// https://github.com/facebook/rocksdb/blob/be7703b27d9b3ac458641aaadf27042d86f6869c/Makefile#L195
 	if cfg!(feature = "lto") {
 		config.flag("-flto");
+
 		if !config.get_compiler().is_like_clang() {
 			panic!(
 				"LTO is only supported with clang. Either disable the `lto` featureor set `CC=/usr/bin/clang \
@@ -144,6 +160,7 @@ fn build_rocksdb() {
 	}
 
 	config.include(".");
+
 	config.define("NDEBUG", Some("1"));
 
 	let mut lib_sources = include_str!("rocksdb_lib_sources.txt")
@@ -189,20 +206,29 @@ fn build_rocksdb() {
 		config.define("OS_MACOSX", None);
 
 		config.define("IOS_CROSS_COMPILE", None);
+
 		config.define("PLATFORM", "IOS");
+
 		config.define("NIOSTATS_CONTEXT", None);
+
 		config.define("NPERF_CONTEXT", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
 
-		env::set_var("IPHONEOS_DEPLOYMENT_TARGET", "12.0");
+		unsafe { env::set_var("IPHONEOS_DEPLOYMENT_TARGET", "12.0") };
 	} else if target.contains("darwin") {
 		config.define("OS_MACOSX", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
 	} else if target.contains("android") {
 		config.define("OS_ANDROID", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
 
 		if &target == "armv7-linux-androideabi" {
@@ -210,42 +236,63 @@ fn build_rocksdb() {
 		}
 	} else if target.contains("aix") {
 		config.define("OS_AIX", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
 	} else if target.contains("linux") {
 		config.define("OS_LINUX", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
+
 		config.define("ROCKSDB_SCHED_GETCPU_PRESENT", None);
 	} else if target.contains("dragonfly") {
 		config.define("OS_DRAGONFLYBSD", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
 	} else if target.contains("freebsd") {
 		config.define("OS_FREEBSD", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
 	} else if target.contains("netbsd") {
 		config.define("OS_NETBSD", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
 	} else if target.contains("openbsd") {
 		config.define("OS_OPENBSD", None);
+
 		config.define("ROCKSDB_PLATFORM_POSIX", None);
+
 		config.define("ROCKSDB_LIB_IO_POSIX", None);
 	} else if target.contains("windows") {
 		link("rpcrt4", false);
+
 		link("shlwapi", false);
+
 		config.define("DWIN32", None);
+
 		config.define("OS_WIN", None);
+
 		config.define("_MBCS", None);
+
 		config.define("WIN64", None);
+
 		config.define("NOMINMAX", None);
+
 		config.define("ROCKSDB_WINDOWS_UTF8_FILENAMES", None);
 
 		if &target == "x86_64-pc-windows-gnu" {
 			// Tell MinGW to create localtime_r wrapper of localtime_s function.
 			config.define("_POSIX_C_SOURCE", Some("1"));
+
 			// Tell MinGW to use at least Windows Vista headers instead of the ones of
 			// Windows XP. (This is minimum supported version of rocksdb)
 			config.define("_WIN32_WINNT", Some("_WIN32_WINNT_VISTA"));
@@ -289,11 +336,13 @@ fn build_rocksdb() {
 	if target.contains("linux") {
 		pkg_config::probe_library("liburing")
 			.expect("The io-uring feature was requested but the library is not available");
+
 		config.define("ROCKSDB_IOURING_PRESENT", Some("1"));
 	}
 
 	if &target != "armv7-linux-androideabi" && env::var("CARGO_CFG_TARGET_POINTER_WIDTH").unwrap() != "64" {
 		config.define("_FILE_OFFSET_BITS", Some("64"));
+
 		config.define("_LARGEFILE64_SOURCE", Some("1"));
 	}
 
@@ -302,18 +351,28 @@ fn build_rocksdb() {
 			config.static_crt(true);
 		}
 		config.flag("-EHsc");
+
 		config.flag("-std:c++17");
 	} else {
 		config.flag(cxx_standard());
+
 		// matches the flags in CMakeLists.txt from rocksdb
 		config.flag("-Wsign-compare");
+
 		config.flag("-Wshadow");
+
 		config.flag("-Wno-unused-parameter");
+
 		config.flag("-Wno-unused-variable");
+
 		config.flag("-Woverloaded-virtual");
+
 		config.flag("-Wnon-virtual-dtor");
+
 		config.flag("-Wno-missing-field-initializers");
+
 		config.flag("-Wno-strict-aliasing");
+
 		config.flag("-Wno-invalid-offsetof");
 	}
 	if target.contains("riscv64gc") {
@@ -327,22 +386,30 @@ fn build_rocksdb() {
 	config.file("build_version.cc");
 
 	config.cpp(true);
+
 	config.flag_if_supported("-std=c++17");
+
 	config.compile("librocksdb.a");
 }
 
 fn build_snappy() {
 	let target = env::var("TARGET").unwrap();
+
 	let endianness = env::var("CARGO_CFG_TARGET_ENDIAN").unwrap();
+
 	let mut config = cc::Build::new();
 
 	config.include("snappy/");
+
 	config.include(".");
+
 	config.define("NDEBUG", Some("1"));
+
 	config.extra_warnings(false);
 
 	if target.contains("msvc") {
 		config.flag("-EHsc");
+
 		if cfg!(feature = "mt_static") {
 			config.static_crt(true);
 		}
@@ -357,14 +424,19 @@ fn build_snappy() {
 	}
 
 	config.file("snappy/snappy.cc");
+
 	config.file("snappy/snappy-sinksource.cc");
+
 	config.file("snappy/snappy-c.cc");
+
 	config.cpp(true);
+
 	config.compile("libsnappy.a");
 }
 
 fn try_to_find_and_link_lib(lib_name:&str) -> bool {
 	println!("cargo:rerun-if-env-changed={lib_name}_COMPILE");
+
 	if let Ok(v) = env::var(format!("{lib_name}_COMPILE")) {
 		if v.to_lowercase() == "true" || v == "1" {
 			return false;
@@ -372,15 +444,19 @@ fn try_to_find_and_link_lib(lib_name:&str) -> bool {
 	}
 
 	println!("cargo:rerun-if-env-changed={lib_name}_LIB_DIR");
+
 	println!("cargo:rerun-if-env-changed={lib_name}_STATIC");
 
 	if let Ok(lib_dir) = env::var(format!("{lib_name}_LIB_DIR")) {
 		println!("cargo:rustc-link-search=native={lib_dir}");
+
 		let mode = match env::var_os(format!("{lib_name}_STATIC")) {
 			Some(_) => "static",
 			None => "dylib",
 		};
+
 		println!("cargo:rustc-link-lib={}={}", mode, lib_name.to_lowercase());
+
 		return true;
 	}
 	false
@@ -394,9 +470,13 @@ fn cxx_standard() -> String {
 
 fn update_submodules() {
 	let program = "git";
+
 	let dir = "../";
+
 	let args = ["submodule", "update", "--init"];
+
 	println!("Running command: \"{} {}\" in dir: {}", program, args.join(" "), dir);
+
 	let ret = Command::new(program).current_dir(dir).args(args).status();
 
 	match ret.map(|status| (status.success(), status.code())) {
@@ -412,6 +492,7 @@ fn main() {
 		update_submodules();
 	}
 	bindgen_rocksdb();
+
 	let target = env::var("TARGET").unwrap();
 
 	if !try_to_find_and_link_lib("ROCKSDB") {
@@ -419,17 +500,21 @@ fn main() {
 		// we don't need to rebuild rocksdb
 		if target.contains("freebsd") {
 			println!("cargo:rustc-link-search=native=/usr/local/lib");
+
 			let mode = match env::var_os("ROCKSDB_STATIC") {
 				Some(_) => "static",
 				None => "dylib",
 			};
+
 			println!("cargo:rustc-link-lib={}=rocksdb", mode);
 
 			return;
 		}
 
 		println!("cargo:rerun-if-changed=rocksdb/");
+
 		fail_on_empty_directory("rocksdb");
+
 		build_rocksdb();
 	} else {
 		// according to https://github.com/alexcrichton/cc-rs/blob/master/src/lib.rs#L2189
@@ -439,12 +524,15 @@ fn main() {
 			println!("cargo:rustc-link-lib=dylib=stdc++");
 		} else if target.contains("aix") {
 			println!("cargo:rustc-link-lib=dylib=c++");
+
 			println!("cargo:rustc-link-lib=dylib=c++abi");
 		}
 	}
 	if cfg!(feature = "snappy") && !try_to_find_and_link_lib("SNAPPY") {
 		println!("cargo:rerun-if-changed=snappy/");
+
 		fail_on_empty_directory("snappy");
+
 		build_snappy();
 	}
 
@@ -452,5 +540,6 @@ fn main() {
 	// this crate. Notably, this allows a dependent crate to locate the RocksDB
 	// sources and built archive artifacts provided by this crate.
 	println!("cargo:cargo_manifest_dir={}", env::var("CARGO_MANIFEST_DIR").unwrap());
+
 	println!("cargo:out_dir={}", env::var("OUT_DIR").unwrap());
 }
