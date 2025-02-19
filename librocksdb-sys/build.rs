@@ -5,6 +5,8 @@ use std::{
 	process::Command,
 };
 
+use regex::Regex;
+
 fn link(name:&str, bundled:bool) {
 	use std::env::var;
 	let target = var("TARGET").unwrap();
@@ -32,23 +34,57 @@ fn bindgen_rocksdb() {
 	let target = env::var("TARGET").unwrap();
 
 	let mut builder = bindgen::Builder::default()
-    .header(rocksdb_include_dir() + "/rocksdb/c.h")
-    .derive_debug(false)
-    .blocklist_type("max_align_t") // https://github.com/rust-lang-nursery/rust-bindgen/issues/550
-    .size_t_is_usize(true);
+		.header(rocksdb_include_dir() + "/rocksdb/c.h")
+		.derive_debug(false)
+		.blocklist_type("max_align_t") // https://github.com/rust-lang-nursery/rust-bindgen/issues/550
+		.size_t_is_usize(true)
+		.ctypes_prefix("libc");
 
 	if target.contains("windows") {
 		builder = builder.clang_args(&["-I", rocksdb_include_dir().as_str()]);
-	} else {
-		builder = builder.ctypes_prefix("libc");
 	}
 
-	let bindings = builder.generate().expect("unable to generate rocksdb bindings");
+	// Define the output path for the generated bindings.
+	let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
 
-	let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-	bindings
-		.write_to_file(out_path.join("bindings.rs"))
+	// Generate the bindings and write them to file.
+	builder
+		.generate()
+		.expect("unable to generate rocksdb bindings")
+		.write_to_file(&out_path)
 		.expect("unable to write rocksdb bindings");
+
+	// Read the generated bindings code.
+	let code = fs::read_to_string(&out_path).expect("Unable to read bindings file");
+
+	// Replace any triple colon before std::option with double colon.
+	let code = Regex::new(r":::+std::option")
+		.expect("Invalid regex")
+		.replace_all(&code, "::std::option");
+
+	// Replace unsafe extern blocks missing the "C" ABI.
+	let code = Regex::new(r"unsafe\s+extern\s*\{")
+		.expect("Invalid regex")
+		.replace_all(&code, "unsafe extern \"C\" {");
+
+	// Fix extern function declarations without explicit ABI
+	let code = Regex::new(r"extern\s+fn\(")
+		.expect("Invalid regex")
+		.replace_all(&code, "extern \"C\" fn(");
+
+	let code = Regex::new(r"extern\s+fn\s")
+		.expect("Invalid regex")
+		.replace_all(&code, "extern \"C\" fn ");
+
+	// Fix anonymous parameters in Option types
+	let code = Regex::new(
+		r"(?m)(arg1|compare|compare_ts|compare_without_ts|create_compaction_filter|delete_value|deleted|deleted_cf|destructor|filter|full_merge|get_ts_size|in_domain|in_range|merge_cf|name|partial_merge|put|put_cf|transform)::std::option::Option<",
+	)
+	.expect("Invalid regex")
+	.replace_all(&code, "${1}_fn: Option<");
+
+	// Write the modified code back to the bindings file.
+	fs::write(&out_path, code.into_owned()).expect("Unable to write updated bindings file");
 }
 
 fn build_rocksdb() {

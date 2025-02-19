@@ -72,22 +72,22 @@ pub struct MergeOperatorCallback<F:MergeFn, PF:MergeFn> {
 	pub partial_merge_fn:PF,
 }
 
-pub unsafe extern fn destructor_callback<F:MergeFn, PF:MergeFn>(raw_cb:*mut c_void) {
+pub unsafe extern "C" fn destructor_callback<F:MergeFn, PF:MergeFn>(raw_cb:*mut c_void) {
 	drop(Box::from_raw(raw_cb as *mut MergeOperatorCallback<F, PF>));
 }
 
-pub unsafe extern fn delete_callback(_raw_cb:*mut c_void, value:*const c_char, value_length:size_t) {
+pub unsafe extern "C" fn delete_callback(_raw_cb:*mut c_void, value:*const c_char, value_length:size_t) {
 	if !value.is_null() {
 		drop(Box::from_raw(slice::from_raw_parts_mut(value as *mut u8, value_length)));
 	}
 }
 
-pub unsafe extern fn name_callback<F:MergeFn, PF:MergeFn>(raw_cb:*mut c_void) -> *const c_char {
+pub unsafe extern "C" fn name_callback<F:MergeFn, PF:MergeFn>(raw_cb:*mut c_void) -> *const c_char {
 	let cb = &mut *(raw_cb as *mut MergeOperatorCallback<F, PF>);
 	cb.name.as_ptr()
 }
 
-pub unsafe extern fn full_merge_callback<F:MergeFn, PF:MergeFn>(
+pub unsafe extern "C" fn full_merge_callback<F:MergeFn, PF:MergeFn>(
 	raw_cb:*mut c_void,
 	raw_key:*const c_char,
 	key_len:size_t,
@@ -121,7 +121,7 @@ pub unsafe extern fn full_merge_callback<F:MergeFn, PF:MergeFn>(
 	)
 }
 
-pub unsafe extern fn partial_merge_callback<F:MergeFn, PF:MergeFn>(
+pub unsafe extern "C" fn partial_merge_callback<F:MergeFn, PF:MergeFn>(
 	raw_cb:*mut c_void,
 	raw_key:*const c_char,
 	key_len:size_t,
