@@ -30,7 +30,6 @@ fn rocksdb_include_dir() -> String { env::var("ROCKSDB_INCLUDE_DIR").unwrap_or_e
 
 fn bindgen_rocksdb() {
 	let target = env::var("TARGET").unwrap();
-	println!("cargo:warning=Building for target: {}", target);
 
 	let mut builder = bindgen::Builder::default()
     .header(rocksdb_include_dir() + "/rocksdb/c.h")
@@ -38,13 +37,9 @@ fn bindgen_rocksdb() {
     .blocklist_type("max_align_t") // https://github.com/rust-lang-nursery/rust-bindgen/issues/550
     .size_t_is_usize(true);
 
-	#[cfg(target_os = "windows")]
-	{
+	if target.contains("windows") {
 		builder = builder.clang_args(&["-I", rocksdb_include_dir().as_str()]);
-	}
-
-	#[cfg(not(target_os = "windows"))]
-	{
+	} else {
 		builder = builder.ctypes_prefix("libc");
 	}
 
