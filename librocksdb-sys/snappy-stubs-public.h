@@ -38,12 +38,11 @@
 
 #define HAVE_STDINT_H 1
 
-
 #include <stdint.h>
 
 #include <stddef.h>
 
-//#include <sys/uio.h>
+// #include <sys/uio.h>
 
 #if defined(_MSC_VER)
 #define ssize_t intptr_t
@@ -52,8 +51,8 @@
 #define SNAPPY_MAJOR 1
 #define SNAPPY_MINOR 1
 #define SNAPPY_PATCHLEVEL 3
-#define SNAPPY_VERSION \
-    ((SNAPPY_MAJOR << 16) | (SNAPPY_MINOR << 8) | SNAPPY_PATCHLEVEL)
+#define SNAPPY_VERSION                                                         \
+	((SNAPPY_MAJOR << 16) | (SNAPPY_MINOR << 8) | SNAPPY_PATCHLEVEL)
 
 #include <string>
 
@@ -81,17 +80,17 @@ typedef unsigned long long uint64;
 
 typedef std::string string;
 
-#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName&);               \
-  void operator=(const TypeName&)
+#define DISALLOW_COPY_AND_ASSIGN(TypeName)                                     \
+	TypeName(const TypeName &);                                                \
+	void operator=(const TypeName &)
 
 // Windows does not have an iovec type, yet the concept is universally useful.
 // It is simple to define it ourselves, so we put it inside our own namespace.
 struct iovec {
-    void* iov_base;
-    size_t iov_len;
+	void *iov_base;
+	size_t iov_len;
 };
 
-}  // namespace snappy
+} // namespace snappy
 
-#endif  // THIRD_PARTY_SNAPPY_OPENSOURCE_SNAPPY_STUBS_PUBLIC_H_
+#endif // THIRD_PARTY_SNAPPY_OPENSOURCE_SNAPPY_STUBS_PUBLIC_H_

@@ -15,48 +15,47 @@
 mod util;
 
 use pretty_assertions::assert_eq;
-
-use rocksdb::{properties, Options, TransactionDB, TransactionDBOptions};
+use rocksdb::{Options, TransactionDB, TransactionDBOptions, properties};
 use util::DBPath;
 
 #[test]
 fn transaction_db_property_test() {
-    let path = DBPath::new("_rust_rocksdb_transaction_db_property_test");
-    {
-        let mut options = Options::default();
-        options.create_if_missing(true);
-        options.enable_statistics();
-        let tx_db_options = TransactionDBOptions::default();
-        let db = TransactionDB::open(&options, &tx_db_options, &path).unwrap();
+	let path = DBPath::new("_rust_rocksdb_transaction_db_property_test");
+	{
+		let mut options = Options::default();
+		options.create_if_missing(true);
+		options.enable_statistics();
+		let tx_db_options = TransactionDBOptions::default();
+		let db = TransactionDB::open(&options, &tx_db_options, &path).unwrap();
 
-        db.put("key1", "value1").unwrap();
-        db.put("key2", "value2").unwrap();
-        db.put("key3", "value3").unwrap();
+		db.put("key1", "value1").unwrap();
+		db.put("key2", "value2").unwrap();
+		db.put("key3", "value3").unwrap();
 
-        let prop_name: &std::ffi::CStr = properties::STATS;
-        let value = db.property_value(prop_name).unwrap().unwrap();
+		let prop_name:&std::ffi::CStr = properties::STATS;
+		let value = db.property_value(prop_name).unwrap().unwrap();
 
-        assert!(value.contains("Compaction Stats"));
-        assert!(value.contains("Cumulative writes: 3 writes"));
-    }
+		assert!(value.contains("Compaction Stats"));
+		assert!(value.contains("Cumulative writes: 3 writes"));
+	}
 }
 
 #[test]
 fn transaction_db_int_property_test() {
-    let path = DBPath::new("_rust_rocksdb_transaction_db_int_property_test");
-    {
-        let mut options = Options::default();
-        options.create_if_missing(true);
-        options.enable_statistics();
-        let tx_db_options = TransactionDBOptions::default();
-        let db = TransactionDB::open(&options, &tx_db_options, &path).unwrap();
+	let path = DBPath::new("_rust_rocksdb_transaction_db_int_property_test");
+	{
+		let mut options = Options::default();
+		options.create_if_missing(true);
+		options.enable_statistics();
+		let tx_db_options = TransactionDBOptions::default();
+		let db = TransactionDB::open(&options, &tx_db_options, &path).unwrap();
 
-        db.put("key1", "value1").unwrap();
-        db.put("key2", "value2").unwrap();
+		db.put("key1", "value1").unwrap();
+		db.put("key2", "value2").unwrap();
 
-        let prop_name: properties::PropertyName = properties::ESTIMATE_NUM_KEYS.to_owned();
-        let value = db.property_int_value(&prop_name).unwrap().unwrap();
+		let prop_name:properties::PropertyName = properties::ESTIMATE_NUM_KEYS.to_owned();
+		let value = db.property_int_value(&prop_name).unwrap().unwrap();
 
-        assert_eq!(value, 2);
-    }
+		assert_eq!(value, 2);
+	}
 }

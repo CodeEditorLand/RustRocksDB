@@ -12,12 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![allow(
-    clippy::all,
-    non_snake_case,
-    non_camel_case_types,
-    non_upper_case_globals
-)]
+#![allow(clippy::all, non_snake_case, non_camel_case_types, non_upper_case_globals)]
 
 // Ensure the libraries are linked in, despite it not being used directly
 #[cfg(feature = "bzip2")]

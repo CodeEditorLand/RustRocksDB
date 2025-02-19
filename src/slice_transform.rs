@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::ffi::CString;
-use std::slice;
+use std::{ffi::CString, slice};
 
 use libc::{c_char, c_uchar, c_void, size_t};
 
@@ -24,7 +23,7 @@ use crate::{ffi, ffi_util::CStrLike};
 /// to store prefix blooms by setting prefix_extractor in
 /// ColumnFamilyOptions.
 pub struct SliceTransform {
-    pub inner: *mut ffi::rocksdb_slicetransform_t,
+	pub inner:*mut ffi::rocksdb_slicetransform_t,
 }
 
 // NB we intentionally don't implement a Drop that passes
@@ -34,82 +33,70 @@ pub struct SliceTransform {
 // opening a DB.
 
 impl SliceTransform {
-    pub fn create(
-        name: impl CStrLike,
-        transform_fn: TransformFn,
-        in_domain_fn: Option<InDomainFn>,
-    ) -> SliceTransform {
-        let cb = Box::into_raw(Box::new(TransformCallback {
-            name: name.into_c_string().unwrap(),
-            transform_fn,
-            in_domain_fn,
-        }));
+	pub fn create(name:impl CStrLike, transform_fn:TransformFn, in_domain_fn:Option<InDomainFn>) -> SliceTransform {
+		let cb = Box::into_raw(Box::new(TransformCallback {
+			name:name.into_c_string().unwrap(),
+			transform_fn,
+			in_domain_fn,
+		}));
 
-        let st = unsafe {
-            ffi::rocksdb_slicetransform_create(
-                cb as *mut c_void,
-                Some(slice_transform_destructor_callback),
-                Some(transform_callback),
-                Some(in_domain_callback),
-                // this None points to the deprecated InRange callback
-                None,
-                Some(slice_transform_name_callback),
-            )
-        };
+		let st = unsafe {
+			ffi::rocksdb_slicetransform_create(
+				cb as *mut c_void,
+				Some(slice_transform_destructor_callback),
+				Some(transform_callback),
+				Some(in_domain_callback),
+				// this None points to the deprecated InRange callback
+				None,
+				Some(slice_transform_name_callback),
+			)
+		};
 
-        SliceTransform { inner: st }
-    }
+		SliceTransform { inner:st }
+	}
 
-    pub fn create_fixed_prefix(len: size_t) -> SliceTransform {
-        SliceTransform {
-            inner: unsafe { ffi::rocksdb_slicetransform_create_fixed_prefix(len) },
-        }
-    }
+	pub fn create_fixed_prefix(len:size_t) -> SliceTransform {
+		SliceTransform { inner:unsafe { ffi::rocksdb_slicetransform_create_fixed_prefix(len) } }
+	}
 
-    pub fn create_noop() -> SliceTransform {
-        SliceTransform {
-            inner: unsafe { ffi::rocksdb_slicetransform_create_noop() },
-        }
-    }
+	pub fn create_noop() -> SliceTransform {
+		SliceTransform { inner:unsafe { ffi::rocksdb_slicetransform_create_noop() } }
+	}
 }
 
 pub type TransformFn<'a> = fn(&'a [u8]) -> &'a [u8];
 pub type InDomainFn = fn(&[u8]) -> bool;
 
 pub struct TransformCallback<'a> {
-    pub name: CString,
-    pub transform_fn: TransformFn<'a>,
-    pub in_domain_fn: Option<InDomainFn>,
+	pub name:CString,
+	pub transform_fn:TransformFn<'a>,
+	pub in_domain_fn:Option<InDomainFn>,
 }
 
-pub unsafe extern "C" fn slice_transform_destructor_callback(raw_cb: *mut c_void) {
-    drop(Box::from_raw(raw_cb as *mut TransformCallback));
+pub unsafe extern fn slice_transform_destructor_callback(raw_cb:*mut c_void) {
+	drop(Box::from_raw(raw_cb as *mut TransformCallback));
 }
 
-pub unsafe extern "C" fn slice_transform_name_callback(raw_cb: *mut c_void) -> *const c_char {
-    let cb = &mut *(raw_cb as *mut TransformCallback);
-    cb.name.as_ptr()
+pub unsafe extern fn slice_transform_name_callback(raw_cb:*mut c_void) -> *const c_char {
+	let cb = &mut *(raw_cb as *mut TransformCallback);
+	cb.name.as_ptr()
 }
 
-pub unsafe extern "C" fn transform_callback(
-    raw_cb: *mut c_void,
-    raw_key: *const c_char,
-    key_len: size_t,
-    dst_length: *mut size_t,
+pub unsafe extern fn transform_callback(
+	raw_cb:*mut c_void,
+	raw_key:*const c_char,
+	key_len:size_t,
+	dst_length:*mut size_t,
 ) -> *mut c_char {
-    let cb = &mut *(raw_cb as *mut TransformCallback);
-    let key = slice::from_raw_parts(raw_key as *const u8, key_len);
-    let prefix = (cb.transform_fn)(key);
-    *dst_length = prefix.len() as size_t;
-    prefix.as_ptr() as *mut c_char
+	let cb = &mut *(raw_cb as *mut TransformCallback);
+	let key = slice::from_raw_parts(raw_key as *const u8, key_len);
+	let prefix = (cb.transform_fn)(key);
+	*dst_length = prefix.len() as size_t;
+	prefix.as_ptr() as *mut c_char
 }
 
-pub unsafe extern "C" fn in_domain_callback(
-    raw_cb: *mut c_void,
-    raw_key: *const c_char,
-    key_len: size_t,
-) -> c_uchar {
-    let cb = &mut *(raw_cb as *mut TransformCallback);
-    let key = slice::from_raw_parts(raw_key as *const u8, key_len);
-    c_uchar::from(cb.in_domain_fn.map_or(true, |in_domain| in_domain(key)))
+pub unsafe extern fn in_domain_callback(raw_cb:*mut c_void, raw_key:*const c_char, key_len:size_t) -> c_uchar {
+	let cb = &mut *(raw_cb as *mut TransformCallback);
+	let key = slice::from_raw_parts(raw_key as *const u8, key_len);
+	c_uchar::from(cb.in_domain_fn.map_or(true, |in_domain| in_domain(key)))
 }

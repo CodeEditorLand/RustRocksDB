@@ -1,8 +1,8 @@
-use rocksdb::{TransactionDB, SingleThreaded};
+use rocksdb::{SingleThreaded, TransactionDB};
 
 fn main() {
-    let _txn = {
-        let db = TransactionDB::<SingleThreaded>::open_default("foo").unwrap();
-        db.transaction()
-    };
+	let _txn = {
+		let db = TransactionDB::<SingleThreaded>::open_default("foo").unwrap();
+		db.transaction()
+	};
 }

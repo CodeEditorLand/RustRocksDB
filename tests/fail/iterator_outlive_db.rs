@@ -1,8 +1,8 @@
-use rocksdb::{IteratorMode, DB};
+use rocksdb::{DB, IteratorMode};
 
 fn main() {
-    let _iter = {
-        let db = DB::open_default("foo").unwrap();
-        db.iterator(IteratorMode::Start)
-    };
+	let _iter = {
+		let db = DB::open_default("foo").unwrap();
+		db.iterator(IteratorMode::Start)
+	};
 }
