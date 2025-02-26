@@ -7,8 +7,8 @@ echo "iterable_named_enum! {"
 echo "    #[derive(Debug, Copy, Clone, PartialEq, Eq)]"
 echo "    #[repr(u32)]"
 echo "    pub enum $EnumType {"
-perl -n0e '/const std::vector<std::pair<'$EnumType's, std::string>> '$EnumType'sNameMap.*?\};/sm && print $&' $File |
-    perl -n0e '
+perl -n0e '/const std::vector<std::pair<'$EnumType's, std::string>> '$EnumType'sNameMap.*?\};/sm && print $&' $File \
+	| perl -n0e '
 while (/\{\s*([\w_]+)\s*,.*?"(.*?)"/smg) {
     $val = $2;
     $name = lc($1);
