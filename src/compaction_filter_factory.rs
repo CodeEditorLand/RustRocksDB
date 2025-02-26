@@ -27,13 +27,13 @@ pub trait CompactionFilterFactory {
 	fn name(&self) -> &CStr;
 }
 
-pub unsafe extern fn destructor_callback<F>(raw_self:*mut c_void)
+pub unsafe extern "C" fn destructor_callback<F>(raw_self:*mut c_void)
 where
 	F: CompactionFilterFactory, {
 	drop(unsafe { Box::from_raw(raw_self as *mut F) });
 }
 
-pub unsafe extern fn name_callback<F>(raw_self:*mut c_void) -> *const c_char
+pub unsafe extern "C" fn name_callback<F>(raw_self:*mut c_void) -> *const c_char
 where
 	F: CompactionFilterFactory, {
 	let self_ = unsafe { &*(raw_self.cast_const() as *const F) };
@@ -58,7 +58,7 @@ impl CompactionFilterContext {
 	}
 }
 
-pub unsafe extern fn create_compaction_filter_callback<F>(
+pub unsafe extern "C" fn create_compaction_filter_callback<F>(
 	raw_self:*mut c_void,
 	context:*mut ffi::rocksdb_compactionfiltercontext_t,
 ) -> *mut ffi::rocksdb_compactionfilter_t

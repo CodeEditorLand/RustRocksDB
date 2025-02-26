@@ -29,15 +29,15 @@ pub struct ComparatorCallback {
 }
 
 impl ComparatorCallback {
-	pub unsafe extern fn destructor_callback(raw_cb:*mut c_void) { drop(unsafe { Box::from_raw(raw_cb as *mut Self) }); }
+	pub unsafe extern "C" fn destructor_callback(raw_cb:*mut c_void) { drop(unsafe { Box::from_raw(raw_cb as *mut Self) }); }
 
-	pub unsafe extern fn name_callback(raw_cb:*mut c_void) -> *const c_char {
+	pub unsafe extern "C" fn name_callback(raw_cb:*mut c_void) -> *const c_char {
 		let cb:&mut Self = unsafe { &mut *(raw_cb as *mut Self) };
 		let ptr = cb.name.as_ptr();
 		ptr as *const c_char
 	}
 
-	pub unsafe extern fn compare_callback(
+	pub unsafe extern "C" fn compare_callback(
 		raw_cb:*mut c_void,
 		a_raw:*const c_char,
 		a_len:size_t,
@@ -59,15 +59,15 @@ pub struct ComparatorWithTsCallback {
 }
 
 impl ComparatorWithTsCallback {
-	pub unsafe extern fn destructor_callback(raw_cb:*mut c_void) { drop(unsafe { Box::from_raw(raw_cb as *mut Self) }); }
+	pub unsafe extern "C" fn destructor_callback(raw_cb:*mut c_void) { drop(unsafe { Box::from_raw(raw_cb as *mut Self) }); }
 
-	pub unsafe extern fn name_callback(raw_cb:*mut c_void) -> *const c_char {
+	pub unsafe extern "C" fn name_callback(raw_cb:*mut c_void) -> *const c_char {
 		let cb:&mut Self = unsafe { &mut *(raw_cb as *mut Self) };
 		let ptr = cb.name.as_ptr();
 		ptr as *const c_char
 	}
 
-	pub unsafe extern fn compare_callback(
+	pub unsafe extern "C" fn compare_callback(
 		raw_cb:*mut c_void,
 		a_raw:*const c_char,
 		a_len:size_t,
@@ -80,7 +80,7 @@ impl ComparatorWithTsCallback {
 		(cb.compare_fn)(a, b) as c_int
 	}
 
-	pub unsafe extern fn compare_ts_callback(
+	pub unsafe extern "C" fn compare_ts_callback(
 		raw_cb:*mut c_void,
 		a_ts_raw:*const c_char,
 		a_ts_len:size_t,
@@ -93,7 +93,7 @@ impl ComparatorWithTsCallback {
 		(cb.compare_ts_fn)(a_ts, b_ts) as c_int
 	}
 
-	pub unsafe extern fn compare_without_ts_callback(
+	pub unsafe extern "C" fn compare_without_ts_callback(
 		raw_cb:*mut c_void,
 		a_raw:*const c_char,
 		a_len:size_t,
