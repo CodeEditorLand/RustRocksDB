@@ -107,15 +107,15 @@ unsafe impl<T:ThreadMode> Sync for TransactionDB<T> {}
 
 impl<T:ThreadMode> DBAccess for TransactionDB<T> {
 	unsafe fn create_snapshot(&self) -> *const ffi::rocksdb_snapshot_t {
-		ffi::rocksdb_transactiondb_create_snapshot(self.inner)
+		unsafe { ffi::rocksdb_transactiondb_create_snapshot(self.inner) }
 	}
 
 	unsafe fn release_snapshot(&self, snapshot:*const ffi::rocksdb_snapshot_t) {
-		ffi::rocksdb_transactiondb_release_snapshot(self.inner, snapshot);
+		unsafe { ffi::rocksdb_transactiondb_release_snapshot(self.inner, snapshot) };
 	}
 
 	unsafe fn create_iterator(&self, readopts:&ReadOptions) -> *mut ffi::rocksdb_iterator_t {
-		ffi::rocksdb_transactiondb_create_iterator(self.inner, readopts.inner)
+		unsafe { ffi::rocksdb_transactiondb_create_iterator(self.inner, readopts.inner) }
 	}
 
 	unsafe fn create_iterator_cf(
@@ -123,7 +123,7 @@ impl<T:ThreadMode> DBAccess for TransactionDB<T> {
 		cf_handle:*mut ffi::rocksdb_column_family_handle_t,
 		readopts:&ReadOptions,
 	) -> *mut ffi::rocksdb_iterator_t {
-		ffi::rocksdb_transactiondb_create_iterator_cf(self.inner, readopts.inner, cf_handle)
+		unsafe { ffi::rocksdb_transactiondb_create_iterator_cf(self.inner, readopts.inner, cf_handle) }
 	}
 
 	fn get_opt<K:AsRef<[u8]>>(&self, key:K, readopts:&ReadOptions) -> Result<Option<Vec<u8>>, Error> {

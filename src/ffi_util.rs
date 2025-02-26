@@ -24,7 +24,7 @@ use libc::{self, c_char, c_void, size_t};
 use crate::{Error, ffi};
 
 pub(crate) unsafe fn from_cstr(ptr:*const c_char) -> String {
-	let cstr = CStr::from_ptr(ptr as *const _);
+	let cstr = unsafe { CStr::from_ptr(ptr as *const _) };
 	String::from_utf8_lossy(cstr.to_bytes()).into_owned()
 }
 
@@ -33,7 +33,7 @@ pub(crate) unsafe fn raw_data(ptr:*const c_char, size:usize) -> Option<Vec<u8>> 
 		None
 	} else {
 		let mut dst = vec![0; size];
-		ptr::copy_nonoverlapping(ptr as *const u8, dst.as_mut_ptr(), size);
+		unsafe { ptr::copy_nonoverlapping(ptr as *const u8, dst.as_mut_ptr(), size) };
 
 		Some(dst)
 	}
