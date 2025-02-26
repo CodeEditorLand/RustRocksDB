@@ -932,22 +932,22 @@ impl Options {
 		column_family_names:*mut *mut c_char,
 		column_family_options:*mut *mut ffi::rocksdb_options_t,
 	) -> Vec<ColumnFamilyDescriptor> {
-		let column_family_names_iter = slice::from_raw_parts(column_family_names, num_column_families)
+		let column_family_names_iter = unsafe { slice::from_raw_parts(column_family_names, num_column_families)
 			.iter()
-			.map(|ptr| from_cstr(*ptr));
-		let column_family_options_iter = slice::from_raw_parts(column_family_options, num_column_families)
+			.map(|ptr| from_cstr(*ptr)) };
+		let column_family_options_iter = unsafe { slice::from_raw_parts(column_family_options, num_column_families)
 			.iter()
-			.map(|ptr| Options { inner:*ptr, outlive:OptionsMustOutliveDB::default() });
+			.map(|ptr| Options { inner:*ptr, outlive:OptionsMustOutliveDB::default() }) };
 		let column_descriptors = column_family_names_iter
 			.zip(column_family_options_iter)
 			.map(|(name, options)| ColumnFamilyDescriptor { name, options, ttl:ColumnFamilyTtl::Disabled })
 			.collect::<Vec<_>>();
 		// free pointers
-		slice::from_raw_parts(column_family_names, num_column_families)
+		unsafe { slice::from_raw_parts(column_family_names, num_column_families)
 			.iter()
-			.for_each(|ptr| ffi::rocksdb_free(*ptr as *mut c_void));
-		ffi::rocksdb_free(column_family_names as *mut c_void);
-		ffi::rocksdb_free(column_family_options as *mut c_void);
+			.for_each(|ptr| ffi::rocksdb_free(*ptr as *mut c_void)) };
+		unsafe { ffi::rocksdb_free(column_family_names as *mut c_void) };
+		unsafe { ffi::rocksdb_free(column_family_options as *mut c_void) };
 		column_descriptors
 	}
 
