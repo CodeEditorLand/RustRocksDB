@@ -1,0 +1,6 @@
+[submodule "librocksdb-sys/rocksdb"]
+	path = librocksdb-sys/rocksdb
+	url = ssh://git@github.com/CodeEditorLand/RocksDB.git
+[submodule "librocksdb-sys/snappy"]
+	path = librocksdb-sys/snappy
+	url = ssh://git@github.com/CodeEditorLand/Snappy.git
