@@ -16,12 +16,7 @@ homepage = "https://github.com/rust-rocksdb/rust-rocksdb"
 exclude = [".gitignore", ".travis.yml", "deploy.sh", "test/**/*"]
 
 [workspace]
-members = [
-	"librocksdb-sys",
-	"librocksdb-sys/zstd-sys/zstd-safe",
-	"librocksdb-sys/zstd-sys/zstd-safe/fuzz",
-	"librocksdb-sys/zstd-sys",
-]
+members = ["librocksdb-sys"]
 exclude = []
 
 [features]
