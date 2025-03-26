@@ -180,23 +180,29 @@ fn build_rocksdb() {
 		if target_features.contains(&"sse2") {
 			config.flag_if_supported("-msse2");
 		}
+
 		if target_features.contains(&"sse4.1") {
 			config.flag_if_supported("-msse4.1");
 		}
+
 		if target_features.contains(&"sse4.2") {
 			config.flag_if_supported("-msse4.2");
 		}
+
 		// Pass along additional target features as defined in
 		// build_tools/build_detect_platform.
 		if target_features.contains(&"avx2") {
 			config.flag_if_supported("-mavx2");
 		}
+
 		if target_features.contains(&"bmi1") {
 			config.flag_if_supported("-mbmi");
 		}
+
 		if target_features.contains(&"lzcnt") {
 			config.flag_if_supported("-mlzcnt");
 		}
+
 		if !target.contains("android") && target_features.contains(&"pclmulqdq") {
 			config.flag_if_supported("-mpclmul");
 		}
@@ -350,6 +356,7 @@ fn build_rocksdb() {
 		if cfg!(feature = "mt_static") {
 			config.static_crt(true);
 		}
+
 		config.flag("-EHsc");
 
 		config.flag("-std:c++17");
@@ -375,10 +382,12 @@ fn build_rocksdb() {
 
 		config.flag("-Wno-invalid-offsetof");
 	}
+
 	if target.contains("riscv64gc") {
 		// link libatomic required to build for riscv64gc
 		println!("cargo:rustc-link-lib=atomic");
 	}
+
 	for file in lib_sources {
 		config.file(format!("rocksdb/{file}"));
 	}
@@ -459,6 +468,7 @@ fn try_to_find_and_link_lib(lib_name:&str) -> bool {
 
 		return true;
 	}
+
 	false
 }
 
@@ -491,6 +501,7 @@ fn main() {
 	if !Path::new("rocksdb/AUTHORS").exists() {
 		update_submodules();
 	}
+
 	bindgen_rocksdb();
 
 	let target = env::var("TARGET").unwrap();
@@ -528,6 +539,7 @@ fn main() {
 			println!("cargo:rustc-link-lib=dylib=c++abi");
 		}
 	}
+
 	if cfg!(feature = "snappy") && !try_to_find_and_link_lib("SNAPPY") {
 		println!("cargo:rerun-if-changed=snappy/");
 
