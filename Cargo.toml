@@ -19,6 +19,7 @@ exclude = [".gitignore", ".travis.yml", "deploy.sh", "test/**/*"]
 members = [
 	"librocksdb-sys",
 	"librocksdb-sys/zstd-sys/zstd-safe",
+	"librocksdb-sys/zstd-sys/zstd-safe/fuzz",
 	"librocksdb-sys/zstd-sys",
 ]
 exclude = []
