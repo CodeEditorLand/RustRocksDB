@@ -97,20 +97,20 @@ where
 	fn filter(&mut self, level:u32, key:&[u8], value:&[u8]) -> Decision { (self.filter_fn)(level, key, value) }
 }
 
-pub unsafe extern "C" fn destructor_callback<F>(raw_cb:*mut c_void)
+pub unsafe extern fn destructor_callback<F>(raw_cb:*mut c_void)
 where
 	F: CompactionFilter, {
 	drop(unsafe { Box::from_raw(raw_cb as *mut F) });
 }
 
-pub unsafe extern "C" fn name_callback<F>(raw_cb:*mut c_void) -> *const c_char
+pub unsafe extern fn name_callback<F>(raw_cb:*mut c_void) -> *const c_char
 where
 	F: CompactionFilter, {
 	let cb = unsafe { &*(raw_cb as *mut F) };
 	cb.name().as_ptr()
 }
 
-pub unsafe extern "C" fn filter_callback<F>(
+pub unsafe extern fn filter_callback<F>(
 	raw_cb:*mut c_void,
 	level:c_int,
 	raw_key:*const c_char,

@@ -160,7 +160,7 @@ unsafe fn CheckIter(iter:*mut rocksdb_iterator_t, key:*const c_char, val:*const 
 }
 
 // Callback from rocksdb_writebatch_iterate()
-unsafe extern "C" fn CheckPut(ptr:*mut c_void, k:*const c_char, klen:size_t, v:*const c_char, vlen:size_t) {
+unsafe extern fn CheckPut(ptr:*mut c_void, k:*const c_char, klen:size_t, v:*const c_char, vlen:size_t) {
 	let mut state:*mut c_int = ptr as *mut c_int;
 	CheckCondition!(*state < 2);
 	match *state {
@@ -178,16 +178,16 @@ unsafe extern "C" fn CheckPut(ptr:*mut c_void, k:*const c_char, klen:size_t, v:*
 }
 
 // Callback from rocksdb_writebatch_iterate()
-unsafe extern "C" fn CheckDel(ptr:*mut c_void, k:*const c_char, klen:size_t) {
+unsafe extern fn CheckDel(ptr:*mut c_void, k:*const c_char, klen:size_t) {
 	let mut state:*mut c_int = ptr as *mut c_int;
 	CheckCondition!(*state == 2);
 	CheckEqual(cstrp!("bar"), k, klen);
 	*state += 1;
 }
 
-unsafe extern "C" fn CmpDestroy(arg:*mut c_void) {}
+unsafe extern fn CmpDestroy(arg:*mut c_void) {}
 
-unsafe extern "C" fn CmpCompare(arg:*mut c_void, a:*const c_char, alen:size_t, b:*const c_char, blen:size_t) -> c_int {
+unsafe extern fn CmpCompare(arg:*mut c_void, a:*const c_char, alen:size_t, b:*const c_char, blen:size_t) -> c_int {
 	let n = if alen < blen { alen } else { blen };
 	let mut r = memcmp(a as *const c_void, b as *const c_void, n);
 	if r == 0 {
@@ -200,17 +200,17 @@ unsafe extern "C" fn CmpCompare(arg:*mut c_void, a:*const c_char, alen:size_t, b
 	r
 }
 
-unsafe extern "C" fn CmpName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
+unsafe extern fn CmpName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
 
 // Custom compaction filter
 
 static mut fake_filter_result:c_uchar = 1;
 
-unsafe extern "C" fn CFilterDestroy(arg:*mut c_void) {}
+unsafe extern fn CFilterDestroy(arg:*mut c_void) {}
 
-unsafe extern "C" fn CFilterName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
+unsafe extern fn CFilterName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
 
-unsafe extern "C" fn CFilterFilter(
+unsafe extern fn CFilterFilter(
 	arg:*mut c_void,
 	level:c_int,
 	key:*const c_char,
@@ -234,11 +234,11 @@ unsafe extern "C" fn CFilterFilter(
 	0
 }
 
-unsafe extern "C" fn CFilterFactoryDestroy(arg:*mut c_void) {}
+unsafe extern fn CFilterFactoryDestroy(arg:*mut c_void) {}
 
-unsafe extern "C" fn CFilterFactoryName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
+unsafe extern fn CFilterFactoryName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
 
-unsafe extern "C" fn CFilterCreate(
+unsafe extern fn CFilterCreate(
 	arg:*mut c_void,
 	context:*mut rocksdb_compactionfiltercontext_t,
 ) -> *mut rocksdb_compactionfilter_t {
@@ -276,11 +276,11 @@ unsafe fn CheckCompaction(
 
 // Custom merge operator
 
-unsafe extern "C" fn MergeOperatorDestroy(arg:*mut c_void) {}
+unsafe extern fn MergeOperatorDestroy(arg:*mut c_void) {}
 
-unsafe extern "C" fn MergeOperatorName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
+unsafe extern fn MergeOperatorName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
 
-unsafe extern "C" fn MergeOperatorFullMerge(
+unsafe extern fn MergeOperatorFullMerge(
 	arg:*mut c_void,
 	key:*const c_char,
 	key_length:size_t,
@@ -299,7 +299,7 @@ unsafe extern "C" fn MergeOperatorFullMerge(
 	result
 }
 
-unsafe extern "C" fn MergeOperatorPartialMerge(
+unsafe extern fn MergeOperatorPartialMerge(
 	arg:*mut c_void,
 	key:*const c_char,
 	key_length:size_t,

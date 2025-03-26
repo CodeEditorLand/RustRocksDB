@@ -8,5 +8,5 @@ path = librocksdb-sys/snappy
 url = ssh://git@github.com/CodeEditorLand/Snappy.git
 ignore = all
 [submodule "librocksdb-sys/zstd-sys"]
-	path = librocksdb-sys/zstd-sys
-	url = ssh://git@github.com/CodeEditorLand/ZSTDSYS.git
+path = librocksdb-sys/zstd-sys
+url = ssh://git@github.com/CodeEditorLand/ZSTDSYS.git
