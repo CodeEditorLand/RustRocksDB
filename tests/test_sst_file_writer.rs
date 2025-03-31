@@ -42,9 +42,9 @@ fn sst_file_writer_works() {
 		let db = DB::open_default(&db_path).unwrap();
 		db.put(b"k3", b"v3").unwrap();
 		db.ingest_external_file(vec![&writer_path]).unwrap();
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 		assert_eq!(r.unwrap().unwrap(), b"v1");
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k2");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k2");
 		assert_eq!(r.unwrap().unwrap(), b"v2");
 		assert!(db.get(b"k3").unwrap().is_none());
 	}
@@ -103,7 +103,7 @@ fn sst_file_writer_with_ts_works() {
 		let mut opts = ReadOptions::default();
 		opts.set_timestamp(ts);
 
-		let r:Result<Option<Vec<u8>>, Error> = db.get_opt(b"k1", &opts);
+		let r: Result<Option<Vec<u8>>, Error> = db.get_opt(b"k1", &opts);
 		assert_eq!(r.unwrap().unwrap(), b"v1");
 
 		// at ts1 k2 should be invisible
@@ -111,7 +111,7 @@ fn sst_file_writer_with_ts_works() {
 
 		// at ts2 k2 and k3 should be visible
 		opts.set_timestamp(ts2);
-		let r:Result<Option<Vec<u8>>, Error> = db.get_opt(b"k2", &opts);
+		let r: Result<Option<Vec<u8>>, Error> = db.get_opt(b"k2", &opts);
 		assert_eq!(r.unwrap().unwrap(), b"v2");
 		let r = db.get_opt(b"k3", &opts);
 		assert_eq!(r.unwrap().unwrap(), b"v3");

@@ -17,9 +17,7 @@ use std::{marker::PhantomData, slice};
 use libc::{c_char, c_uchar, size_t};
 
 use crate::{
-	Error,
-	ReadOptions,
-	WriteBatch,
+	Error, ReadOptions, WriteBatch,
 	db::{DB, DBAccess},
 	ffi,
 };
@@ -80,8 +78,8 @@ pub type DBRawIterator<'a> = DBRawIteratorWithThreadMode<'a, DB>;
 /// }
 /// let _ = DB::destroy(&Options::default(), path);
 /// ```
-pub struct DBRawIteratorWithThreadMode<'a, D:DBAccess> {
-	inner:std::ptr::NonNull<ffi::rocksdb_iterator_t>,
+pub struct DBRawIteratorWithThreadMode<'a, D: DBAccess> {
+	inner: std::ptr::NonNull<ffi::rocksdb_iterator_t>,
 
 	/// When iterate_lower_bound or iterate_upper_bound are set, the inner
 	/// C iterator keeps a pointer to the upper bound inside `_readopts`.
@@ -91,29 +89,33 @@ pub struct DBRawIteratorWithThreadMode<'a, D:DBAccess> {
 	/// And yes, we need to store the entire ReadOptions structure since C++
 	/// ReadOptions keep reference to C rocksdb_readoptions_t wrapper which
 	/// point to vectors we own.  See issue #660.
-	_readopts:ReadOptions,
+	_readopts: ReadOptions,
 
-	db:PhantomData<&'a D>,
+	db: PhantomData<&'a D>,
 }
 
-impl<'a, D:DBAccess> DBRawIteratorWithThreadMode<'a, D> {
-	pub(crate) fn new(db:&D, readopts:ReadOptions) -> Self {
+impl<'a, D: DBAccess> DBRawIteratorWithThreadMode<'a, D> {
+	pub(crate) fn new(db: &D, readopts: ReadOptions) -> Self {
 		let inner = unsafe { db.create_iterator(&readopts) };
 		Self::from_inner(inner, readopts)
 	}
 
-	pub(crate) fn new_cf(db:&'a D, cf_handle:*mut ffi::rocksdb_column_family_handle_t, readopts:ReadOptions) -> Self {
+	pub(crate) fn new_cf(
+		db: &'a D,
+		cf_handle: *mut ffi::rocksdb_column_family_handle_t,
+		readopts: ReadOptions,
+	) -> Self {
 		let inner = unsafe { db.create_iterator_cf(cf_handle, &readopts) };
 		Self::from_inner(inner, readopts)
 	}
 
-	fn from_inner(inner:*mut ffi::rocksdb_iterator_t, readopts:ReadOptions) -> Self {
+	fn from_inner(inner: *mut ffi::rocksdb_iterator_t, readopts: ReadOptions) -> Self {
 		// This unwrap will never fail since rocksdb_create_iterator and
 		// rocksdb_create_iterator_cf functions always return non-null. They
 		// use new and deference the result so any nulls would end up with SIGSEGV
 		// there and we would have a bigger issue.
 		let inner = std::ptr::NonNull::new(inner).unwrap();
-		Self { inner, _readopts:readopts, db:PhantomData }
+		Self { inner, _readopts: readopts, db: PhantomData }
 	}
 
 	/// Returns `true` if the iterator is valid. An iterator is invalidated when
@@ -123,7 +125,9 @@ impl<'a, D:DBAccess> DBRawIteratorWithThreadMode<'a, D> {
 	/// returned `false`, use the
 	/// [`status`](DBRawIteratorWithThreadMode::status) method. `status` will
 	/// never return an error when `valid` is `true`.
-	pub fn valid(&self) -> bool { unsafe { ffi::rocksdb_iter_valid(self.inner.as_ptr()) != 0 } }
+	pub fn valid(&self) -> bool {
+		unsafe { ffi::rocksdb_iter_valid(self.inner.as_ptr()) != 0 }
+	}
 
 	/// Returns an error `Result` if the iterator has encountered an error
 	/// during operation. When an error is encountered, the iterator is
@@ -252,7 +256,7 @@ impl<'a, D:DBAccess> DBRawIteratorWithThreadMode<'a, D> {
 	/// }
 	/// let _ = DB::destroy(&Options::default(), path);
 	/// ```
-	pub fn seek<K:AsRef<[u8]>>(&mut self, key:K) {
+	pub fn seek<K: AsRef<[u8]>>(&mut self, key: K) {
 		let key = key.as_ref();
 
 		unsafe {
@@ -293,7 +297,7 @@ impl<'a, D:DBAccess> DBRawIteratorWithThreadMode<'a, D> {
 	/// }
 	/// let _ = DB::destroy(&Options::default(), path);
 	/// ```
-	pub fn seek_for_prev<K:AsRef<[u8]>>(&mut self, key:K) {
+	pub fn seek_for_prev<K: AsRef<[u8]>>(&mut self, key: K) {
 		let key = key.as_ref();
 
 		unsafe {
@@ -320,10 +324,14 @@ impl<'a, D:DBAccess> DBRawIteratorWithThreadMode<'a, D> {
 	}
 
 	/// Returns a slice of the current key.
-	pub fn key(&self) -> Option<&[u8]> { if self.valid() { Some(self.key_impl()) } else { None } }
+	pub fn key(&self) -> Option<&[u8]> {
+		if self.valid() { Some(self.key_impl()) } else { None }
+	}
 
 	/// Returns a slice of the current value.
-	pub fn value(&self) -> Option<&[u8]> { if self.valid() { Some(self.value_impl()) } else { None } }
+	pub fn value(&self) -> Option<&[u8]> {
+		if self.valid() { Some(self.value_impl()) } else { None }
+	}
 
 	/// Returns pair with slice of the current key and current value.
 	pub fn item(&self) -> Option<(&[u8], &[u8])> {
@@ -336,8 +344,8 @@ impl<'a, D:DBAccess> DBRawIteratorWithThreadMode<'a, D> {
 		// returned take `&mut self`, so borrow checker will prevent use of buffer
 		// after seek.
 		unsafe {
-			let mut key_len:size_t = 0;
-			let key_len_ptr:*mut size_t = &mut key_len;
+			let mut key_len: size_t = 0;
+			let key_len_ptr: *mut size_t = &mut key_len;
 			let key_ptr = ffi::rocksdb_iter_key(self.inner.as_ptr(), key_len_ptr);
 			slice::from_raw_parts(key_ptr as *const c_uchar, key_len)
 		}
@@ -349,15 +357,15 @@ impl<'a, D:DBAccess> DBRawIteratorWithThreadMode<'a, D> {
 		// returned take `&mut self`, so borrow checker will prevent use of buffer
 		// after seek.
 		unsafe {
-			let mut val_len:size_t = 0;
-			let val_len_ptr:*mut size_t = &mut val_len;
+			let mut val_len: size_t = 0;
+			let val_len_ptr: *mut size_t = &mut val_len;
 			let val_ptr = ffi::rocksdb_iter_value(self.inner.as_ptr(), val_len_ptr);
 			slice::from_raw_parts(val_ptr as *const c_uchar, val_len)
 		}
 	}
 }
 
-impl<D:DBAccess> Drop for DBRawIteratorWithThreadMode<'_, D> {
+impl<D: DBAccess> Drop for DBRawIteratorWithThreadMode<'_, D> {
 	fn drop(&mut self) {
 		unsafe {
 			ffi::rocksdb_iter_destroy(self.inner.as_ptr());
@@ -365,8 +373,8 @@ impl<D:DBAccess> Drop for DBRawIteratorWithThreadMode<'_, D> {
 	}
 }
 
-unsafe impl<D:DBAccess> Send for DBRawIteratorWithThreadMode<'_, D> {}
-unsafe impl<D:DBAccess> Sync for DBRawIteratorWithThreadMode<'_, D> {}
+unsafe impl<D: DBAccess> Send for DBRawIteratorWithThreadMode<'_, D> {}
+unsafe impl<D: DBAccess> Sync for DBRawIteratorWithThreadMode<'_, D> {}
 
 /// A type alias to keep compatibility. See [`DBIteratorWithThreadMode`] for
 /// details
@@ -411,10 +419,10 @@ pub type DBIterator<'a> = DBIteratorWithThreadMode<'a, DB>;
 /// }
 /// let _ = DB::destroy(&Options::default(), path);
 /// ```
-pub struct DBIteratorWithThreadMode<'a, D:DBAccess> {
-	raw:DBRawIteratorWithThreadMode<'a, D>,
-	direction:Direction,
-	done:bool,
+pub struct DBIteratorWithThreadMode<'a, D: DBAccess> {
+	raw: DBRawIteratorWithThreadMode<'a, D>,
+	direction: Direction,
+	done: bool,
 }
 
 #[derive(Copy, Clone)]
@@ -432,31 +440,31 @@ pub enum IteratorMode<'a> {
 	From(&'a [u8], Direction),
 }
 
-impl<'a, D:DBAccess> DBIteratorWithThreadMode<'a, D> {
-	pub(crate) fn new(db:&D, readopts:ReadOptions, mode:IteratorMode) -> Self {
+impl<'a, D: DBAccess> DBIteratorWithThreadMode<'a, D> {
+	pub(crate) fn new(db: &D, readopts: ReadOptions, mode: IteratorMode) -> Self {
 		Self::from_raw(DBRawIteratorWithThreadMode::new(db, readopts), mode)
 	}
 
 	pub(crate) fn new_cf(
-		db:&'a D,
-		cf_handle:*mut ffi::rocksdb_column_family_handle_t,
-		readopts:ReadOptions,
-		mode:IteratorMode,
+		db: &'a D,
+		cf_handle: *mut ffi::rocksdb_column_family_handle_t,
+		readopts: ReadOptions,
+		mode: IteratorMode,
 	) -> Self {
 		Self::from_raw(DBRawIteratorWithThreadMode::new_cf(db, cf_handle, readopts), mode)
 	}
 
-	fn from_raw(raw:DBRawIteratorWithThreadMode<'a, D>, mode:IteratorMode) -> Self {
+	fn from_raw(raw: DBRawIteratorWithThreadMode<'a, D>, mode: IteratorMode) -> Self {
 		let mut rv = DBIteratorWithThreadMode {
 			raw,
-			direction:Direction::Forward, // blown away by set_mode()
-			done:false,
+			direction: Direction::Forward, // blown away by set_mode()
+			done: false,
 		};
 		rv.set_mode(mode);
 		rv
 	}
 
-	pub fn set_mode(&mut self, mode:IteratorMode) {
+	pub fn set_mode(&mut self, mode: IteratorMode) {
 		self.done = false;
 		self.direction = match mode {
 			IteratorMode::Start => {
@@ -479,7 +487,7 @@ impl<'a, D:DBAccess> DBIteratorWithThreadMode<'a, D> {
 	}
 }
 
-impl<D:DBAccess> Iterator for DBIteratorWithThreadMode<'_, D> {
+impl<D: DBAccess> Iterator for DBIteratorWithThreadMode<'_, D> {
 	type Item = Result<KVBytes, Error>;
 
 	fn next(&mut self) -> Option<Result<KVBytes, Error>> {
@@ -499,10 +507,12 @@ impl<D:DBAccess> Iterator for DBIteratorWithThreadMode<'_, D> {
 	}
 }
 
-impl<D:DBAccess> std::iter::FusedIterator for DBIteratorWithThreadMode<'_, D> {}
+impl<D: DBAccess> std::iter::FusedIterator for DBIteratorWithThreadMode<'_, D> {}
 
-impl<'a, D:DBAccess> Into<DBRawIteratorWithThreadMode<'a, D>> for DBIteratorWithThreadMode<'a, D> {
-	fn into(self) -> DBRawIteratorWithThreadMode<'a, D> { self.raw }
+impl<'a, D: DBAccess> Into<DBRawIteratorWithThreadMode<'a, D>> for DBIteratorWithThreadMode<'a, D> {
+	fn into(self) -> DBRawIteratorWithThreadMode<'a, D> {
+		self.raw
+	}
 }
 
 /// Iterates the batches of writes since a given sequence number.
@@ -515,8 +525,8 @@ impl<'a, D:DBAccess> Into<DBRawIteratorWithThreadMode<'a, D>> for DBIteratorWith
 /// The iterator item type is a tuple of (`u64`, `WriteBatch`) where the first
 /// value is the sequence number of the associated write batch.
 pub struct DBWALIterator {
-	pub(crate) inner:*mut ffi::rocksdb_wal_iterator_t,
-	pub(crate) start_seq_number:u64,
+	pub(crate) inner: *mut ffi::rocksdb_wal_iterator_t,
+	pub(crate) start_seq_number: u64,
 }
 
 impl DBWALIterator {
@@ -526,7 +536,9 @@ impl DBWALIterator {
 	/// To check whether the iterator encountered an error after `valid` has
 	/// returned `false`, use the [`status`](DBWALIterator::status) method.
 	/// `status` will never return an error when `valid` is `true`.
-	pub fn valid(&self) -> bool { unsafe { ffi::rocksdb_wal_iter_valid(self.inner) != 0 } }
+	pub fn valid(&self) -> bool {
+		unsafe { ffi::rocksdb_wal_iter_valid(self.inner) != 0 }
+	}
 
 	/// Returns an error `Result` if the iterator has encountered an error
 	/// during operation. When an error is encountered, the iterator is
@@ -548,8 +560,8 @@ impl Iterator for DBWALIterator {
 			return None;
 		}
 
-		let mut seq:u64 = 0;
-		let mut batch = WriteBatch { inner:unsafe { ffi::rocksdb_wal_iter_get_batch(self.inner, &mut seq) } };
+		let mut seq: u64 = 0;
+		let mut batch = WriteBatch { inner: unsafe { ffi::rocksdb_wal_iter_get_batch(self.inner, &mut seq) } };
 
 		// if the initial sequence number is what was requested we skip it to
 		// only provide changes *after* it
@@ -563,7 +575,7 @@ impl Iterator for DBWALIterator {
 			}
 
 			// this drops which in turn frees the skipped batch
-			batch = WriteBatch { inner:unsafe { ffi::rocksdb_wal_iter_get_batch(self.inner, &mut seq) } };
+			batch = WriteBatch { inner: unsafe { ffi::rocksdb_wal_iter_get_batch(self.inner, &mut seq) } };
 		}
 
 		if !self.valid() {

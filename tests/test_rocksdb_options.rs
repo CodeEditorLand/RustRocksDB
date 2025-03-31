@@ -17,15 +17,7 @@ mod util;
 use std::{fs, io::Read as _};
 
 use rocksdb::{
-	BlockBasedOptions,
-	Cache,
-	DB,
-	DBCompressionType,
-	DataBlockIndexType,
-	Env,
-	LruCacheOptions,
-	Options,
-	ReadOptions,
+	BlockBasedOptions, Cache, DB, DBCompressionType, DataBlockIndexType, Env, LruCacheOptions, Options, ReadOptions,
 	checkpoint::Checkpoint,
 };
 use util::DBPath;
@@ -192,7 +184,7 @@ fn set_wal_compression_unsupported() {
 	}
 }
 
-fn test_compression_type(ty:DBCompressionType) {
+fn test_compression_type(ty: DBCompressionType) {
 	let path = DBPath::new("_test_compression_type");
 
 	let mut opts = Options::default();
@@ -217,16 +209,24 @@ fn test_compression_type(ty:DBCompressionType) {
 }
 
 #[test]
-fn test_none_compression() { test_compression_type(DBCompressionType::None); }
+fn test_none_compression() {
+	test_compression_type(DBCompressionType::None);
+}
 
 #[test]
-fn test_snappy_compression() { test_compression_type(DBCompressionType::Snappy); }
+fn test_snappy_compression() {
+	test_compression_type(DBCompressionType::Snappy);
+}
 
 #[test]
-fn test_zlib_compression() { test_compression_type(DBCompressionType::Zlib); }
+fn test_zlib_compression() {
+	test_compression_type(DBCompressionType::Zlib);
+}
 
 #[test]
-fn test_bz2_compression() { test_compression_type(DBCompressionType::Bz2); }
+fn test_bz2_compression() {
+	test_compression_type(DBCompressionType::Bz2);
+}
 
 #[test]
 fn test_lz4_compression() {
@@ -235,7 +235,9 @@ fn test_lz4_compression() {
 }
 
 #[test]
-fn test_zstd_compression() { test_compression_type(DBCompressionType::Zstd); }
+fn test_zstd_compression() {
+	test_compression_type(DBCompressionType::Zstd);
+}
 
 #[test]
 fn test_add_compact_on_deletion_collector_factory() {
@@ -340,8 +342,8 @@ fn test_set_blob_cache() {
 
 	let db = DB::open(&opts, &path).unwrap();
 
-	const KEY:&[u8] = b"k1";
-	const VALUE:&[u8] = b"01234567890123456789";
+	const KEY: &[u8] = b"k1";
+	const VALUE: &[u8] = b"01234567890123456789";
 	db.put(KEY, VALUE).unwrap();
 
 	// Cache miss
@@ -369,8 +371,8 @@ fn test_lru_cache_custom_opts() {
 
 	let db = DB::open(&opts, &path).unwrap();
 
-	const KEY:&[u8] = b"k1";
-	const VALUE:&[u8] = b"01234567890123456789";
+	const KEY: &[u8] = b"k1";
+	const VALUE: &[u8] = b"01234567890123456789";
 	db.put(KEY, VALUE).unwrap();
 
 	// Cache miss

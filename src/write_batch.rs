@@ -53,7 +53,7 @@ pub type WriteBatch = WriteBatchWithTransaction<false>;
 ///
 /// [`Transaction`]: crate::Transaction
 pub struct WriteBatchWithTransaction<const TRANSACTION: bool> {
-	pub(crate) inner:*mut ffi::rocksdb_writebatch_t,
+	pub(crate) inner: *mut ffi::rocksdb_writebatch_t,
 }
 
 /// Receives the puts and deletes of a write batch.
@@ -62,12 +62,18 @@ pub struct WriteBatchWithTransaction<const TRANSACTION: bool> {
 /// iterating the operations within a `WriteBatch`
 pub trait WriteBatchIterator {
 	/// Called with a key and value that were `put` into the batch.
-	fn put(&mut self, key:Box<[u8]>, value:Box<[u8]>);
+	fn put(&mut self, key: Box<[u8]>, value: Box<[u8]>);
 	/// Called with a key that was `delete`d from the batch.
-	fn delete(&mut self, key:Box<[u8]>);
+	fn delete(&mut self, key: Box<[u8]>);
 }
 
-unsafe extern "C" fn writebatch_put_callback(state:*mut c_void, k:*const c_char, klen:usize, v:*const c_char, vlen:usize) {
+unsafe extern fn writebatch_put_callback(
+	state: *mut c_void,
+	k: *const c_char,
+	klen: usize,
+	v: *const c_char,
+	vlen: usize,
+) {
 	// coerce the raw pointer back into a box, but "leak" it so we prevent
 	// freeing the resource before we are done with it
 	let boxed_cb = unsafe { Box::from_raw(state as *mut &mut dyn WriteBatchIterator) };
@@ -77,7 +83,7 @@ unsafe extern "C" fn writebatch_put_callback(state:*mut c_void, k:*const c_char,
 	leaked_cb.put(key.to_vec().into_boxed_slice(), value.to_vec().into_boxed_slice());
 }
 
-unsafe extern "C" fn writebatch_delete_callback(state:*mut c_void, k:*const c_char, klen:usize) {
+unsafe extern fn writebatch_delete_callback(state: *mut c_void, k: *const c_char, klen: usize) {
 	// coerce the raw pointer back into a box, but "leak" it so we prevent
 	// freeing the resource before we are done with it
 	let boxed_cb = unsafe { Box::from_raw(state as *mut &mut dyn WriteBatchIterator) };
@@ -88,35 +94,39 @@ unsafe extern "C" fn writebatch_delete_callback(state:*mut c_void, k:*const c_ch
 
 impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 	/// Create a new `WriteBatch` without allocating memory.
-	pub fn new() -> Self { Self { inner:unsafe { ffi::rocksdb_writebatch_create() } } }
+	pub fn new() -> Self {
+		Self { inner: unsafe { ffi::rocksdb_writebatch_create() } }
+	}
 
 	/// Creates `WriteBatch` with the specified `capacity` in bytes. Allocates
 	/// immediately.
-	pub fn with_capacity_bytes(capacity_bytes:usize) -> Self {
+	pub fn with_capacity_bytes(capacity_bytes: usize) -> Self {
 		Self {
 			// zeroes from default constructor
 			// https://github.com/facebook/rocksdb/blob/0f35db55d86ea8699ea936c9e2a4e34c82458d6b/include/rocksdb/write_batch.h#L66
-			inner:unsafe { ffi::rocksdb_writebatch_create_with_params(capacity_bytes, 0, 0, 0) },
+			inner: unsafe { ffi::rocksdb_writebatch_create_with_params(capacity_bytes, 0, 0, 0) },
 		}
 	}
 
 	/// Construct with a reference to a byte array serialized by [`WriteBatch`].
-	pub fn from_data(data:&[u8]) -> Self {
+	pub fn from_data(data: &[u8]) -> Self {
 		unsafe {
 			let ptr = data.as_ptr();
 			let len = data.len();
 			Self {
-				inner:ffi::rocksdb_writebatch_create_from(ptr as *const libc::c_char, len as size_t),
+				inner: ffi::rocksdb_writebatch_create_from(ptr as *const libc::c_char, len as size_t),
 			}
 		}
 	}
 
-	pub fn len(&self) -> usize { unsafe { ffi::rocksdb_writebatch_count(self.inner) as usize } }
+	pub fn len(&self) -> usize {
+		unsafe { ffi::rocksdb_writebatch_count(self.inner) as usize }
+	}
 
 	/// Return WriteBatch serialized size (in bytes).
 	pub fn size_in_bytes(&self) -> usize {
 		unsafe {
-			let mut batch_size:size_t = 0;
+			let mut batch_size: size_t = 0;
 			ffi::rocksdb_writebatch_data(self.inner, &mut batch_size);
 			batch_size
 		}
@@ -126,19 +136,21 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 	/// of the batch.
 	pub fn data(&self) -> &[u8] {
 		unsafe {
-			let mut batch_size:size_t = 0;
+			let mut batch_size: size_t = 0;
 			let batch_data = ffi::rocksdb_writebatch_data(self.inner, &mut batch_size);
 			std::slice::from_raw_parts(batch_data as _, batch_size)
 		}
 	}
 
-	pub fn is_empty(&self) -> bool { self.len() == 0 }
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
 
 	/// Iterate the put and delete operations within this write batch. Note that
 	/// this does _not_ return an `Iterator` but instead will invoke the `put()`
 	/// and `delete()` member functions of the provided `WriteBatchIterator`
 	/// trait implementation.
-	pub fn iterate(&self, callbacks:&mut dyn WriteBatchIterator) {
+	pub fn iterate(&self, callbacks: &mut dyn WriteBatchIterator) {
 		let state = Box::into_raw(Box::new(callbacks));
 		unsafe {
 			ffi::rocksdb_writebatch_iterate(
@@ -154,10 +166,11 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 	}
 
 	/// Insert a value into the database under the given key.
-	pub fn put<K, V>(&mut self, key:K, value:V)
+	pub fn put<K, V>(&mut self, key: K, value: V)
 	where
 		K: AsRef<[u8]>,
-		V: AsRef<[u8]>, {
+		V: AsRef<[u8]>,
+	{
 		let key = key.as_ref();
 		let value = value.as_ref();
 
@@ -174,10 +187,11 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 
 	/// Insert a value into the specific column family of the database under the
 	/// given key.
-	pub fn put_cf<K, V>(&mut self, cf:&impl AsColumnFamilyRef, key:K, value:V)
+	pub fn put_cf<K, V>(&mut self, cf: &impl AsColumnFamilyRef, key: K, value: V)
 	where
 		K: AsRef<[u8]>,
-		V: AsRef<[u8]>, {
+		V: AsRef<[u8]>,
+	{
 		let key = key.as_ref();
 		let value = value.as_ref();
 
@@ -195,11 +209,12 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 
 	/// Insert a value into the specific column family of the database
 	/// under the given key with timestamp.
-	pub fn put_cf_with_ts<K, V, S>(&mut self, cf:&impl AsColumnFamilyRef, key:K, ts:S, value:V)
+	pub fn put_cf_with_ts<K, V, S>(&mut self, cf: &impl AsColumnFamilyRef, key: K, ts: S, value: V)
 	where
 		K: AsRef<[u8]>,
 		V: AsRef<[u8]>,
-		S: AsRef<[u8]>, {
+		S: AsRef<[u8]>,
+	{
 		let key = key.as_ref();
 		let value = value.as_ref();
 		let ts = ts.as_ref();
@@ -217,10 +232,11 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 		}
 	}
 
-	pub fn merge<K, V>(&mut self, key:K, value:V)
+	pub fn merge<K, V>(&mut self, key: K, value: V)
 	where
 		K: AsRef<[u8]>,
-		V: AsRef<[u8]>, {
+		V: AsRef<[u8]>,
+	{
 		let key = key.as_ref();
 		let value = value.as_ref();
 
@@ -235,10 +251,11 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 		}
 	}
 
-	pub fn merge_cf<K, V>(&mut self, cf:&impl AsColumnFamilyRef, key:K, value:V)
+	pub fn merge_cf<K, V>(&mut self, cf: &impl AsColumnFamilyRef, key: K, value: V)
 	where
 		K: AsRef<[u8]>,
-		V: AsRef<[u8]>, {
+		V: AsRef<[u8]>,
+	{
 		let key = key.as_ref();
 		let value = value.as_ref();
 
@@ -256,7 +273,7 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 
 	/// Removes the database entry for key. Does nothing if the key was not
 	/// found.
-	pub fn delete<K:AsRef<[u8]>>(&mut self, key:K) {
+	pub fn delete<K: AsRef<[u8]>>(&mut self, key: K) {
 		let key = key.as_ref();
 
 		unsafe {
@@ -266,7 +283,7 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 
 	/// Removes the database entry in the specific column family for key.
 	/// Does nothing if the key was not found.
-	pub fn delete_cf<K:AsRef<[u8]>>(&mut self, cf:&impl AsColumnFamilyRef, key:K) {
+	pub fn delete_cf<K: AsRef<[u8]>>(&mut self, cf: &impl AsColumnFamilyRef, key: K) {
 		let key = key.as_ref();
 
 		unsafe {
@@ -281,7 +298,7 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 
 	/// Removes the database entry in the specific column family with timestamp
 	/// for key. Does nothing if the key was not found.
-	pub fn delete_cf_with_ts<K:AsRef<[u8]>, S:AsRef<[u8]>>(&mut self, cf:&impl AsColumnFamilyRef, key:K, ts:S) {
+	pub fn delete_cf_with_ts<K: AsRef<[u8]>, S: AsRef<[u8]>>(&mut self, cf: &impl AsColumnFamilyRef, key: K, ts: S) {
 		let key = key.as_ref();
 		let ts = ts.as_ref();
 		unsafe {
@@ -306,7 +323,7 @@ impl<const TRANSACTION: bool> WriteBatchWithTransaction<TRANSACTION> {
 	//
 	// Example application: add timestamps to the transaction log for use in
 	// replication.
-	pub fn put_log_data<V:AsRef<[u8]>>(&mut self, log_data:V) {
+	pub fn put_log_data<V: AsRef<[u8]>>(&mut self, log_data: V) {
 		let log_data = log_data.as_ref();
 
 		unsafe {
@@ -332,7 +349,7 @@ impl WriteBatchWithTransaction<false> {
 	/// Removes the database entries in the range ["begin_key", "end_key"),
 	/// i.e., including "begin_key" and excluding "end_key". It is not an error
 	/// if no keys exist in the range ["begin_key", "end_key").
-	pub fn delete_range<K:AsRef<[u8]>>(&mut self, from:K, to:K) {
+	pub fn delete_range<K: AsRef<[u8]>>(&mut self, from: K, to: K) {
 		let (start_key, end_key) = (from.as_ref(), to.as_ref());
 
 		unsafe {
@@ -351,7 +368,7 @@ impl WriteBatchWithTransaction<false> {
 	/// Removes the database entries in the range ["begin_key", "end_key"),
 	/// i.e., including "begin_key" and excluding "end_key". It is not an error
 	/// if no keys exist in the range ["begin_key", "end_key").
-	pub fn delete_range_cf<K:AsRef<[u8]>>(&mut self, cf:&impl AsColumnFamilyRef, from:K, to:K) {
+	pub fn delete_range_cf<K: AsRef<[u8]>>(&mut self, cf: &impl AsColumnFamilyRef, from: K, to: K) {
 		let (start_key, end_key) = (from.as_ref(), to.as_ref());
 
 		unsafe {
@@ -368,7 +385,9 @@ impl WriteBatchWithTransaction<false> {
 }
 
 impl<const TRANSACTION: bool> Default for WriteBatchWithTransaction<TRANSACTION> {
-	fn default() -> Self { Self::new() }
+	fn default() -> Self {
+		Self::new()
+	}
 }
 
 impl<const TRANSACTION: bool> Drop for WriteBatchWithTransaction<TRANSACTION> {

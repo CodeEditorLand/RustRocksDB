@@ -6,12 +6,14 @@ use rocksdb::{CompactOptions, DB, Options, ReadOptions};
 use util::{U64Comparator, U64Timestamp};
 
 /// This function is for ensuring test of backwards compatibility
-pub fn rocks_old_compare(one:&[u8], two:&[u8]) -> Ordering { one.cmp(two) }
+pub fn rocks_old_compare(one: &[u8], two: &[u8]) -> Ordering {
+	one.cmp(two)
+}
 
 type CompareFn = dyn Fn(&[u8], &[u8]) -> Ordering;
 
 /// create database add some values, and iterate over these
-pub fn write_to_db_with_comparator(compare_fn:Box<CompareFn>) -> Vec<String> {
+pub fn write_to_db_with_comparator(compare_fn: Box<CompareFn>) -> Vec<String> {
 	let mut result_vec = Vec::new();
 
 	let tempdir = tempfile::Builder::new()
@@ -50,9 +52,9 @@ pub fn write_to_db_with_comparator(compare_fn:Box<CompareFn>) -> Vec<String> {
 /// Then run a test with a reverse sorting clojure and make sure the order is
 /// reverted
 fn test_comparator() {
-	let local_compare = move |one:&[u8], two:&[u8]| one.cmp(two);
+	let local_compare = move |one: &[u8], two: &[u8]| one.cmp(two);
 	let x = 0;
-	let local_compare_reverse = move |one:&[u8], two:&[u8]| {
+	let local_compare_reverse = move |one: &[u8], two: &[u8]| {
 		println!("Use the x value from the closure scope to do something smart: {:?}", x);
 		match one.cmp(two) {
 			Ordering::Less => Ordering::Greater,

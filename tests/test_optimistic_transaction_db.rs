@@ -16,22 +16,9 @@
 mod util;
 
 use rocksdb::{
-	CuckooTableOptions,
-	DB,
-	DBAccess,
-	Direction,
-	Error,
-	ErrorKind,
-	IteratorMode,
-	OptimisticTransactionDB,
-	OptimisticTransactionOptions,
-	Options,
-	ReadOptions,
-	SingleThreaded,
-	SliceTransform,
-	SnapshotWithThreadMode,
-	WriteBatchWithTransaction,
-	WriteOptions,
+	CuckooTableOptions, DB, DBAccess, Direction, Error, ErrorKind, IteratorMode, OptimisticTransactionDB,
+	OptimisticTransactionOptions, Options, ReadOptions, SingleThreaded, SliceTransform, SnapshotWithThreadMode,
+	WriteBatchWithTransaction, WriteOptions,
 };
 use util::DBPath;
 
@@ -39,11 +26,11 @@ use util::DBPath;
 fn open_default() {
 	let path = DBPath::new("_rust_rocksdb_optimistic_transaction_db_open_default");
 	{
-		let db:OptimisticTransactionDB<SingleThreaded> = OptimisticTransactionDB::open_default(&path).unwrap();
+		let db: OptimisticTransactionDB<SingleThreaded> = OptimisticTransactionDB::open_default(&path).unwrap();
 
 		assert!(db.put(b"k1", b"v1111").is_ok());
 
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 
 		assert_eq!(r.unwrap().unwrap(), b"v1111");
 		assert!(db.delete(b"k1").is_ok());
@@ -58,7 +45,7 @@ fn open_cf() {
 		let mut opts = Options::default();
 		opts.create_if_missing(true);
 		opts.create_missing_column_families(true);
-		let db:OptimisticTransactionDB<SingleThreaded> =
+		let db: OptimisticTransactionDB<SingleThreaded> =
 			OptimisticTransactionDB::open_cf(&opts, &path, ["cf1", "cf2"]).unwrap();
 
 		let cf1 = db.cf_handle("cf1").unwrap();
@@ -87,7 +74,7 @@ fn multi_get() {
 	let path = DBPath::new("_rust_rocksdb_multi_get");
 
 	{
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
 		let initial_snap = db.snapshot();
 		db.put(b"k1", b"v1").unwrap();
 		let k1_snap = db.snapshot();
@@ -95,7 +82,7 @@ fn multi_get() {
 
 		let _ = db.multi_get([b"k0"; 40]);
 
-		let assert_values = |values:Vec<_>| {
+		let assert_values = |values: Vec<_>| {
 			assert_eq!(3, values.len());
 			assert_eq!(values[0], None);
 			assert_eq!(values[1], Some(b"v1".to_vec()));
@@ -161,7 +148,8 @@ fn multi_get_cf() {
 		let mut opts = Options::default();
 		opts.create_if_missing(true);
 		opts.create_missing_column_families(true);
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_cf(&opts, &path, ["cf0", "cf1", "cf2"]).unwrap();
+		let db: OptimisticTransactionDB =
+			OptimisticTransactionDB::open_cf(&opts, &path, ["cf0", "cf1", "cf2"]).unwrap();
 
 		let cf0 = db.cf_handle("cf0").unwrap();
 
@@ -198,7 +186,7 @@ fn multi_get_cf() {
 #[test]
 fn destroy_on_open() {
 	let path = DBPath::new("_rust_rocksdb_optimistic_transaction_db_destroy_on_open");
-	let _db:OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
+	let _db: OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
 	let opts = Options::default();
 	// The TransactionDB will still be open when we try to destroy it and the lock
 	// should fail.
@@ -217,7 +205,7 @@ fn destroy_on_open() {
 fn writebatch() {
 	let path = DBPath::new("_rust_rocksdb_optimistic_transaction_db_writebatch");
 	{
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
 		{
 			// test put
 			let mut batch = WriteBatchWithTransaction::<true>::default();
@@ -232,7 +220,7 @@ fn writebatch() {
 			assert!(db.get(b"k1").unwrap().is_none());
 			let p = db.write(batch);
 			assert!(p.is_ok());
-			let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+			let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 			assert_eq!(r.unwrap().unwrap(), b"v1111");
 		}
 		{
@@ -260,16 +248,16 @@ fn writebatch() {
 fn iterator_test() {
 	let path = DBPath::new("_rust_rocksdb_optimistic_transaction_db_iteratortest");
 	{
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
 
-		let k1:Box<[u8]> = b"k1".to_vec().into_boxed_slice();
-		let k2:Box<[u8]> = b"k2".to_vec().into_boxed_slice();
-		let k3:Box<[u8]> = b"k3".to_vec().into_boxed_slice();
-		let k4:Box<[u8]> = b"k4".to_vec().into_boxed_slice();
-		let v1:Box<[u8]> = b"v1111".to_vec().into_boxed_slice();
-		let v2:Box<[u8]> = b"v2222".to_vec().into_boxed_slice();
-		let v3:Box<[u8]> = b"v3333".to_vec().into_boxed_slice();
-		let v4:Box<[u8]> = b"v4444".to_vec().into_boxed_slice();
+		let k1: Box<[u8]> = b"k1".to_vec().into_boxed_slice();
+		let k2: Box<[u8]> = b"k2".to_vec().into_boxed_slice();
+		let k3: Box<[u8]> = b"k3".to_vec().into_boxed_slice();
+		let k4: Box<[u8]> = b"k4".to_vec().into_boxed_slice();
+		let v1: Box<[u8]> = b"v1111".to_vec().into_boxed_slice();
+		let v2: Box<[u8]> = b"v2222".to_vec().into_boxed_slice();
+		let v3: Box<[u8]> = b"v3333".to_vec().into_boxed_slice();
+		let v4: Box<[u8]> = b"v4444".to_vec().into_boxed_slice();
 
 		db.put(&*k1, &*v1).unwrap();
 		db.put(&*k2, &*v2).unwrap();
@@ -307,7 +295,7 @@ fn iterator_test() {
 fn snapshot_test() {
 	let path = DBPath::new("_rust_rocksdb_optimistic_transaction_db_snapshottest");
 	{
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
 
 		assert!(db.put(b"k1", b"v1111").is_ok());
 
@@ -330,7 +318,7 @@ fn prefix_extract_and_iterate_test() {
 		opts.create_missing_column_families(true);
 		opts.set_prefix_extractor(SliceTransform::create_fixed_prefix(2));
 
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open(&opts, &path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open(&opts, &path).unwrap();
 		db.put(b"p1_k1", b"v1").unwrap();
 		db.put(b"p2_k2", b"v2").unwrap();
 		db.put(b"p1_k3", b"v3").unwrap();
@@ -343,7 +331,7 @@ fn prefix_extract_and_iterate_test() {
 		readopts.set_pin_data(true);
 
 		let iter = db.iterator_opt(IteratorMode::Start, readopts);
-		let expected:Vec<_> = vec![(b"p1_k1", b"v1"), (b"p1_k3", b"v3"), (b"p1_k4", b"v4")]
+		let expected: Vec<_> = vec![(b"p1_k1", b"v1"), (b"p1_k3", b"v3"), (b"p1_k4", b"v4")]
 			.into_iter()
 			.map(|(k, v)| (k.to_vec().into_boxed_slice(), v.to_vec().into_boxed_slice()))
 			.collect();
@@ -367,13 +355,13 @@ fn cuckoo() {
 		opts.set_cuckoo_table_factory(&factory_opts);
 		opts.create_if_missing(true);
 
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open(&opts, &path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open(&opts, &path).unwrap();
 		db.put(b"k1", b"v1").unwrap();
 		db.put(b"k2", b"v2").unwrap();
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 
 		assert_eq!(r.unwrap().unwrap(), b"v1");
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k2");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k2");
 
 		assert_eq!(r.unwrap().unwrap(), b"v2");
 		assert!(db.delete(b"k1").is_ok());
@@ -387,7 +375,7 @@ fn transaction() {
 	{
 		let mut opts = Options::default();
 		opts.create_if_missing(true);
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open(&opts, &path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open(&opts, &path).unwrap();
 
 		// put outside of transaction
 		db.put(b"k1", b"v1").unwrap();
@@ -428,16 +416,16 @@ fn transaction() {
 fn transaction_iterator() {
 	let path = DBPath::new("_rust_rocksdb_optimistic_transaction_db_transaction_iterator");
 	{
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
 
-		let k1:Box<[u8]> = b"k1".to_vec().into_boxed_slice();
-		let k2:Box<[u8]> = b"k2".to_vec().into_boxed_slice();
-		let k3:Box<[u8]> = b"k3".to_vec().into_boxed_slice();
-		let k4:Box<[u8]> = b"k4".to_vec().into_boxed_slice();
-		let v1:Box<[u8]> = b"v1111".to_vec().into_boxed_slice();
-		let v2:Box<[u8]> = b"v2222".to_vec().into_boxed_slice();
-		let v3:Box<[u8]> = b"v3333".to_vec().into_boxed_slice();
-		let v4:Box<[u8]> = b"v4444".to_vec().into_boxed_slice();
+		let k1: Box<[u8]> = b"k1".to_vec().into_boxed_slice();
+		let k2: Box<[u8]> = b"k2".to_vec().into_boxed_slice();
+		let k3: Box<[u8]> = b"k3".to_vec().into_boxed_slice();
+		let k4: Box<[u8]> = b"k4".to_vec().into_boxed_slice();
+		let v1: Box<[u8]> = b"v1111".to_vec().into_boxed_slice();
+		let v2: Box<[u8]> = b"v2222".to_vec().into_boxed_slice();
+		let v3: Box<[u8]> = b"v3333".to_vec().into_boxed_slice();
+		let v4: Box<[u8]> = b"v4444".to_vec().into_boxed_slice();
 
 		db.put(&*k1, &*v1).unwrap();
 		db.put(&*k2, &*v2).unwrap();
@@ -477,7 +465,7 @@ fn transaction_iterator() {
 fn transaction_rollback() {
 	let path = DBPath::new("_rust_rocksdb_optimistic_transaction_db_transaction_rollback");
 	{
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
 		let txn = db.transaction();
 
 		txn.rollback().unwrap();
@@ -509,7 +497,7 @@ fn transaction_cf() {
 		let mut opts = Options::default();
 		opts.create_if_missing(true);
 		opts.create_missing_column_families(true);
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_cf(&opts, &path, ["cf1", "cf2"]).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_cf(&opts, &path, ["cf1", "cf2"]).unwrap();
 
 		let cf1 = db.cf_handle("cf1").unwrap();
 		let cf2 = db.cf_handle("cf2").unwrap();
@@ -539,7 +527,7 @@ fn transaction_cf() {
 fn transaction_snapshot() {
 	let path = DBPath::new("_rust_rocksdb_optimistic_transaction_db_transaction_snapshot");
 	{
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_default(&path).unwrap();
 
 		let txn = db.transaction();
 		let snapshot = txn.snapshot();
@@ -578,7 +566,7 @@ fn delete_range_test() {
 		opts.create_missing_column_families(true);
 
 		let cfs = vec!["cf1"];
-		let db:OptimisticTransactionDB = OptimisticTransactionDB::open_cf(&opts, &path, cfs).unwrap();
+		let db: OptimisticTransactionDB = OptimisticTransactionDB::open_cf(&opts, &path, cfs).unwrap();
 
 		let cf1 = db.cf_handle("cf1").unwrap();
 		db.put_cf(&cf1, b"k1", b"v1").unwrap();

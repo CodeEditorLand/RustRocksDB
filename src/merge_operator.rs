@@ -66,38 +66,38 @@ use libc::{self, c_char, c_int, c_void, size_t};
 pub trait MergeFn: Fn(&[u8], Option<&[u8]>, &MergeOperands) -> Option<Vec<u8>> + Send + Sync + 'static {}
 impl<F> MergeFn for F where F: Fn(&[u8], Option<&[u8]>, &MergeOperands) -> Option<Vec<u8>> + Send + Sync + 'static {}
 
-pub struct MergeOperatorCallback<F:MergeFn, PF:MergeFn> {
-	pub name:CString,
-	pub full_merge_fn:F,
-	pub partial_merge_fn:PF,
+pub struct MergeOperatorCallback<F: MergeFn, PF: MergeFn> {
+	pub name: CString,
+	pub full_merge_fn: F,
+	pub partial_merge_fn: PF,
 }
 
-pub unsafe extern "C" fn destructor_callback<F:MergeFn, PF:MergeFn>(raw_cb:*mut c_void) {
+pub unsafe extern fn destructor_callback<F: MergeFn, PF: MergeFn>(raw_cb: *mut c_void) {
 	drop(unsafe { Box::from_raw(raw_cb as *mut MergeOperatorCallback<F, PF>) });
 }
 
-pub unsafe extern "C" fn delete_callback(_raw_cb:*mut c_void, value:*const c_char, value_length:size_t) {
+pub unsafe extern fn delete_callback(_raw_cb: *mut c_void, value: *const c_char, value_length: size_t) {
 	if !value.is_null() {
 		drop(unsafe { Box::from_raw(slice::from_raw_parts_mut(value as *mut u8, value_length)) });
 	}
 }
 
-pub unsafe extern "C" fn name_callback<F:MergeFn, PF:MergeFn>(raw_cb:*mut c_void) -> *const c_char {
+pub unsafe extern fn name_callback<F: MergeFn, PF: MergeFn>(raw_cb: *mut c_void) -> *const c_char {
 	let cb = unsafe { &mut *(raw_cb as *mut MergeOperatorCallback<F, PF>) };
 	cb.name.as_ptr()
 }
 
-pub unsafe extern "C" fn full_merge_callback<F:MergeFn, PF:MergeFn>(
-	raw_cb:*mut c_void,
-	raw_key:*const c_char,
-	key_len:size_t,
-	existing_value:*const c_char,
-	existing_value_len:size_t,
-	operands_list:*const *const c_char,
-	operands_list_len:*const size_t,
-	num_operands:c_int,
-	success:*mut u8,
-	new_value_length:*mut size_t,
+pub unsafe extern fn full_merge_callback<F: MergeFn, PF: MergeFn>(
+	raw_cb: *mut c_void,
+	raw_key: *const c_char,
+	key_len: size_t,
+	existing_value: *const c_char,
+	existing_value_len: size_t,
+	operands_list: *const *const c_char,
+	operands_list_len: *const size_t,
+	num_operands: c_int,
+	success: *mut u8,
+	new_value_length: *mut size_t,
 ) -> *mut c_char {
 	let cb = unsafe { &mut *(raw_cb as *mut MergeOperatorCallback<F, PF>) };
 	let operands = &MergeOperands::new(operands_list, operands_list_len, num_operands);
@@ -121,15 +121,15 @@ pub unsafe extern "C" fn full_merge_callback<F:MergeFn, PF:MergeFn>(
 	)
 }
 
-pub unsafe extern "C" fn partial_merge_callback<F:MergeFn, PF:MergeFn>(
-	raw_cb:*mut c_void,
-	raw_key:*const c_char,
-	key_len:size_t,
-	operands_list:*const *const c_char,
-	operands_list_len:*const size_t,
-	num_operands:c_int,
-	success:*mut u8,
-	new_value_length:*mut size_t,
+pub unsafe extern fn partial_merge_callback<F: MergeFn, PF: MergeFn>(
+	raw_cb: *mut c_void,
+	raw_key: *const c_char,
+	key_len: size_t,
+	operands_list: *const *const c_char,
+	operands_list_len: *const size_t,
+	num_operands: c_int,
+	success: *mut u8,
+	new_value_length: *mut size_t,
 ) -> *mut c_char {
 	let cb = unsafe { &mut *(raw_cb as *mut MergeOperatorCallback<F, PF>) };
 	let operands = &MergeOperands::new(operands_list, operands_list_len, num_operands);
@@ -149,24 +149,34 @@ pub unsafe extern "C" fn partial_merge_callback<F:MergeFn, PF:MergeFn>(
 }
 
 pub struct MergeOperands {
-	operands_list:*const *const c_char,
-	operands_list_len:*const size_t,
-	num_operands:usize,
+	operands_list: *const *const c_char,
+	operands_list_len: *const size_t,
+	num_operands: usize,
 }
 
 impl MergeOperands {
-	fn new(operands_list:*const *const c_char, operands_list_len:*const size_t, num_operands:c_int) -> MergeOperands {
+	fn new(
+		operands_list: *const *const c_char,
+		operands_list_len: *const size_t,
+		num_operands: c_int,
+	) -> MergeOperands {
 		assert!(num_operands >= 0);
-		MergeOperands { operands_list, operands_list_len, num_operands:num_operands as usize }
+		MergeOperands { operands_list, operands_list_len, num_operands: num_operands as usize }
 	}
 
-	pub fn len(&self) -> usize { self.num_operands }
+	pub fn len(&self) -> usize {
+		self.num_operands
+	}
 
-	pub fn is_empty(&self) -> bool { self.num_operands == 0 }
+	pub fn is_empty(&self) -> bool {
+		self.num_operands == 0
+	}
 
-	pub fn iter(&self) -> MergeOperandsIter { MergeOperandsIter { operands:self, cursor:0 } }
+	pub fn iter(&self) -> MergeOperandsIter {
+		MergeOperandsIter { operands: self, cursor: 0 }
+	}
 
-	fn get_operand(&self, index:usize) -> Option<&[u8]> {
+	fn get_operand(&self, index: usize) -> Option<&[u8]> {
 		if index >= self.num_operands {
 			None
 		} else {
@@ -185,8 +195,8 @@ impl MergeOperands {
 }
 
 pub struct MergeOperandsIter<'a> {
-	operands:&'a MergeOperands,
-	cursor:usize,
+	operands: &'a MergeOperands,
+	cursor: usize,
 }
 
 impl<'a> Iterator for MergeOperandsIter<'a> {
@@ -208,5 +218,7 @@ impl<'a> IntoIterator for &'a MergeOperands {
 	type IntoIter = MergeOperandsIter<'a>;
 	type Item = &'a [u8];
 
-	fn into_iter(self) -> Self::IntoIter { Self::IntoIter { operands:self, cursor:0 } }
+	fn into_iter(self) -> Self::IntoIter {
+		Self::IntoIter { operands: self, cursor: 0 }
+	}
 }

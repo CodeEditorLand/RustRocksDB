@@ -22,12 +22,14 @@ use util::{DBPath, assert_iter, pair};
 pub fn test_slice_transform() {
 	let db_path = DBPath::new("_rust_rocksdb_slice_transform_test");
 	{
-		const A1:&[u8] = b"aaa1";
-		const A2:&[u8] = b"aaa2";
-		const B1:&[u8] = b"bbb1";
-		const B2:&[u8] = b"bbb2";
+		const A1: &[u8] = b"aaa1";
+		const A2: &[u8] = b"aaa2";
+		const B1: &[u8] = b"bbb1";
+		const B2: &[u8] = b"bbb2";
 
-		fn first_three(k:&[u8]) -> &[u8] { &k[..3] }
+		fn first_three(k: &[u8]) -> &[u8] {
+			&k[..3]
+		}
 
 		let prefix_extractor = SliceTransform::create("first_three", first_three, None);
 
@@ -49,7 +51,7 @@ pub fn test_slice_transform() {
 
 #[test]
 fn test_no_in_domain() {
-	fn extract_suffix(slice:&[u8]) -> &[u8] {
+	fn extract_suffix(slice: &[u8]) -> &[u8] {
 		if slice.len() > 4 { &slice[slice.len() - 4..slice.len()] } else { slice }
 	}
 

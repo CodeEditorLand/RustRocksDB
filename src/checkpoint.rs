@@ -23,13 +23,13 @@ use crate::{DBCommon, Error, ThreadMode, db::DBInner, ffi, ffi_util::to_cpath};
 
 /// Undocumented parameter for `ffi::rocksdb_checkpoint_create` function. Zero
 /// by default.
-const LOG_SIZE_FOR_FLUSH:u64 = 0_u64;
+const LOG_SIZE_FOR_FLUSH: u64 = 0_u64;
 
 /// Database's checkpoint object.
 /// Used to create checkpoints of the specified DB from time to time.
 pub struct Checkpoint<'db> {
-	inner:*mut ffi::rocksdb_checkpoint_t,
-	_db:PhantomData<&'db ()>,
+	inner: *mut ffi::rocksdb_checkpoint_t,
+	_db: PhantomData<&'db ()>,
 }
 
 impl<'db> Checkpoint<'db> {
@@ -37,8 +37,8 @@ impl<'db> Checkpoint<'db> {
 	///
 	/// Does not actually produce checkpoints, call `.create_checkpoint()`
 	/// method to produce a DB checkpoint.
-	pub fn new<T:ThreadMode, I:DBInner>(db:&'db DBCommon<T, I>) -> Result<Self, Error> {
-		let checkpoint:*mut ffi::rocksdb_checkpoint_t;
+	pub fn new<T: ThreadMode, I: DBInner>(db: &'db DBCommon<T, I>) -> Result<Self, Error> {
+		let checkpoint: *mut ffi::rocksdb_checkpoint_t;
 
 		unsafe {
 			checkpoint = ffi_try!(ffi::rocksdb_checkpoint_object_create(db.inner.inner()));
@@ -48,11 +48,11 @@ impl<'db> Checkpoint<'db> {
 			return Err(Error::new("Could not create checkpoint object.".to_owned()));
 		}
 
-		Ok(Self { inner:checkpoint, _db:PhantomData })
+		Ok(Self { inner: checkpoint, _db: PhantomData })
 	}
 
 	/// Creates new physical DB checkpoint in directory specified by `path`.
-	pub fn create_checkpoint<P:AsRef<Path>>(&self, path:P) -> Result<(), Error> {
+	pub fn create_checkpoint<P: AsRef<Path>>(&self, path: P) -> Result<(), Error> {
 		let cpath = to_cpath(path)?;
 		unsafe {
 			ffi_try!(ffi::rocksdb_checkpoint_create(self.inner, cpath.as_ptr(), LOG_SIZE_FOR_FLUSH,));

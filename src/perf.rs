@@ -112,7 +112,7 @@ pub enum PerfMetric {
 }
 
 /// Sets the perf stats level for current thread.
-pub fn set_perf_stats(lvl:PerfStatsLevel) {
+pub fn set_perf_stats(lvl: PerfStatsLevel) {
 	unsafe {
 		ffi::rocksdb_set_perf_level(lvl as c_int);
 	}
@@ -121,7 +121,7 @@ pub fn set_perf_stats(lvl:PerfStatsLevel) {
 /// Thread local context for gathering performance counter efficiently
 /// and transparently.
 pub struct PerfContext {
-	pub(crate) inner:*mut ffi::rocksdb_perfcontext_t,
+	pub(crate) inner: *mut ffi::rocksdb_perfcontext_t,
 }
 
 impl Default for PerfContext {
@@ -129,7 +129,7 @@ impl Default for PerfContext {
 		let ctx = unsafe { ffi::rocksdb_perfcontext_create() };
 		assert!(!ctx.is_null(), "Could not create Perf Context");
 
-		Self { inner:ctx }
+		Self { inner: ctx }
 	}
 }
 
@@ -150,7 +150,7 @@ impl PerfContext {
 	}
 
 	/// Get the report on perf
-	pub fn report(&self, exclude_zero_counters:bool) -> String {
+	pub fn report(&self, exclude_zero_counters: bool) -> String {
 		unsafe {
 			let ptr = ffi::rocksdb_perfcontext_report(self.inner, c_uchar::from(exclude_zero_counters));
 			let report = from_cstr(ptr);
@@ -160,25 +160,27 @@ impl PerfContext {
 	}
 
 	/// Returns value of a metric
-	pub fn metric(&self, id:PerfMetric) -> u64 { unsafe { ffi::rocksdb_perfcontext_metric(self.inner, id as c_int) } }
+	pub fn metric(&self, id: PerfMetric) -> u64 {
+		unsafe { ffi::rocksdb_perfcontext_metric(self.inner, id as c_int) }
+	}
 }
 
 /// Memory usage stats
 pub struct MemoryUsageStats {
 	/// Approximate memory usage of all the mem-tables
-	pub mem_table_total:u64,
+	pub mem_table_total: u64,
 	/// Approximate memory usage of un-flushed mem-tables
-	pub mem_table_unflushed:u64,
+	pub mem_table_unflushed: u64,
 	/// Approximate memory usage of all the table readers
-	pub mem_table_readers_total:u64,
+	pub mem_table_readers_total: u64,
 	/// Approximate memory usage by cache
-	pub cache_total:u64,
+	pub cache_total: u64,
 }
 
 /// Wrap over memory_usage_t. Hold current memory usage of the specified DB
 /// instances and caches
 pub struct MemoryUsage {
-	inner:*mut ffi::rocksdb_memory_usage_t,
+	inner: *mut ffi::rocksdb_memory_usage_t,
 }
 
 impl Drop for MemoryUsage {
@@ -213,7 +215,7 @@ impl MemoryUsage {
 
 /// Builder for MemoryUsage
 pub struct MemoryUsageBuilder {
-	inner:*mut ffi::rocksdb_memory_consumers_t,
+	inner: *mut ffi::rocksdb_memory_consumers_t,
 }
 
 impl Drop for MemoryUsageBuilder {
@@ -231,13 +233,13 @@ impl MemoryUsageBuilder {
 		if mc.is_null() {
 			Err(Error::new("Could not create MemoryUsage builder".to_owned()))
 		} else {
-			Ok(Self { inner:mc })
+			Ok(Self { inner: mc })
 		}
 	}
 
 	/// Add a DB instance to collect memory usage from it and add up in total
 	/// stats
-	pub fn add_tx_db<T:ThreadMode>(&mut self, db:&TransactionDB<T>) {
+	pub fn add_tx_db<T: ThreadMode>(&mut self, db: &TransactionDB<T>) {
 		unsafe {
 			let base = ffi::rocksdb_transactiondb_get_base_db(db.inner);
 			ffi::rocksdb_memory_consumers_add_db(self.inner, base);
@@ -246,14 +248,14 @@ impl MemoryUsageBuilder {
 
 	/// Add a DB instance to collect memory usage from it and add up in total
 	/// stats
-	pub fn add_db<T:ThreadMode, D:DBInner>(&mut self, db:&DBCommon<T, D>) {
+	pub fn add_db<T: ThreadMode, D: DBInner>(&mut self, db: &DBCommon<T, D>) {
 		unsafe {
 			ffi::rocksdb_memory_consumers_add_db(self.inner, db.inner.inner());
 		}
 	}
 
 	/// Add a cache to collect memory usage from it and add up in total stats
-	pub fn add_cache(&mut self, cache:&Cache) {
+	pub fn add_cache(&mut self, cache: &Cache) {
 		unsafe {
 			ffi::rocksdb_memory_consumers_add_cache(self.inner, cache.0.inner.as_ptr());
 		}
@@ -263,13 +265,13 @@ impl MemoryUsageBuilder {
 	pub fn build(&self) -> Result<MemoryUsage, Error> {
 		unsafe {
 			let mu = ffi_try!(ffi::rocksdb_approximate_memory_usage_create(self.inner));
-			Ok(MemoryUsage { inner:mu })
+			Ok(MemoryUsage { inner: mu })
 		}
 	}
 }
 
 /// Get memory usage stats from DB instances and Cache instances
-pub fn get_memory_usage_stats(dbs:Option<&[&DB]>, caches:Option<&[&Cache]>) -> Result<MemoryUsageStats, Error> {
+pub fn get_memory_usage_stats(dbs: Option<&[&DB]>, caches: Option<&[&Cache]>) -> Result<MemoryUsageStats, Error> {
 	let mut builder = MemoryUsageBuilder::new()?;
 	if let Some(dbs_) = dbs {
 		dbs_.iter().for_each(|db| builder.add_db(db));
@@ -280,9 +282,9 @@ pub fn get_memory_usage_stats(dbs:Option<&[&DB]>, caches:Option<&[&Cache]>) -> R
 
 	let mu = builder.build()?;
 	Ok(MemoryUsageStats {
-		mem_table_total:mu.approximate_mem_table_total(),
-		mem_table_unflushed:mu.approximate_mem_table_unflushed(),
-		mem_table_readers_total:mu.approximate_mem_table_readers_total(),
-		cache_total:mu.approximate_cache_total(),
+		mem_table_total: mu.approximate_mem_table_total(),
+		mem_table_unflushed: mu.approximate_mem_table_unflushed(),
+		mem_table_readers_total: mu.approximate_mem_table_readers_total(),
+		cache_total: mu.approximate_cache_total(),
 	})
 }

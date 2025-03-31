@@ -25,26 +25,26 @@ use crate::{DBCommon, Error, ThreadMode, db::DBInner, env::Env, ffi, ffi_util::t
 /// backups). Backups are identified by their always-increasing IDs.
 pub struct BackupEngineInfo {
 	/// Timestamp of the backup
-	pub timestamp:i64,
+	pub timestamp: i64,
 	/// ID of the backup
-	pub backup_id:u32,
+	pub backup_id: u32,
 	/// Size of the backup
-	pub size:u64,
+	pub size: u64,
 	/// Number of files related to the backup
-	pub num_files:u32,
+	pub num_files: u32,
 }
 
 pub struct BackupEngine {
-	inner:*mut ffi::rocksdb_backup_engine_t,
-	_outlive:Env,
+	inner: *mut ffi::rocksdb_backup_engine_t,
+	_outlive: Env,
 }
 
 pub struct BackupEngineOptions {
-	inner:*mut ffi::rocksdb_backup_engine_options_t,
+	inner: *mut ffi::rocksdb_backup_engine_options_t,
 }
 
 pub struct RestoreOptions {
-	inner:*mut ffi::rocksdb_restore_options_t,
+	inner: *mut ffi::rocksdb_restore_options_t,
 }
 
 // BackupEngine is a simple pointer wrapper, so it's safe to send to another
@@ -53,8 +53,8 @@ unsafe impl Send for BackupEngine {}
 
 impl BackupEngine {
 	/// Open a backup engine with the specified options and RocksDB Env.
-	pub fn open(opts:&BackupEngineOptions, env:&Env) -> Result<Self, Error> {
-		let be:*mut ffi::rocksdb_backup_engine_t;
+	pub fn open(opts: &BackupEngineOptions, env: &Env) -> Result<Self, Error> {
+		let be: *mut ffi::rocksdb_backup_engine_t;
 		unsafe {
 			be = ffi_try!(ffi::rocksdb_backup_engine_open_opts(opts.inner, env.0.inner));
 		}
@@ -63,14 +63,14 @@ impl BackupEngine {
 			return Err(Error::new("Could not initialize backup engine.".to_owned()));
 		}
 
-		Ok(Self { inner:be, _outlive:env.clone() })
+		Ok(Self { inner: be, _outlive: env.clone() })
 	}
 
 	/// Captures the state of the database in the latest backup.
 	///
 	/// Note: no flush before backup is performed. User might want to
 	/// use `create_new_backup_flush` instead.
-	pub fn create_new_backup<T:ThreadMode, D:DBInner>(&mut self, db:&DBCommon<T, D>) -> Result<(), Error> {
+	pub fn create_new_backup<T: ThreadMode, D: DBInner>(&mut self, db: &DBCommon<T, D>) -> Result<(), Error> {
 		self.create_new_backup_flush(db, false)
 	}
 
@@ -78,10 +78,10 @@ impl BackupEngine {
 	///
 	/// Set flush_before_backup=true to avoid losing unflushed key/value
 	/// pairs from the memtable.
-	pub fn create_new_backup_flush<T:ThreadMode, D:DBInner>(
+	pub fn create_new_backup_flush<T: ThreadMode, D: DBInner>(
 		&mut self,
-		db:&DBCommon<T, D>,
-		flush_before_backup:bool,
+		db: &DBCommon<T, D>,
+		flush_before_backup: bool,
 	) -> Result<(), Error> {
 		unsafe {
 			ffi_try!(ffi::rocksdb_backup_engine_create_new_backup_flush(
@@ -93,7 +93,7 @@ impl BackupEngine {
 		}
 	}
 
-	pub fn purge_old_backups(&mut self, num_backups_to_keep:usize) -> Result<(), Error> {
+	pub fn purge_old_backups(&mut self, num_backups_to_keep: usize) -> Result<(), Error> {
 		unsafe {
 			ffi_try!(ffi::rocksdb_backup_engine_purge_old_backups(
 				self.inner,
@@ -124,11 +124,11 @@ impl BackupEngine {
 	///     return Err(e.to_string());
 	///  }
 	/// ```
-	pub fn restore_from_latest_backup<D:AsRef<Path>, W:AsRef<Path>>(
+	pub fn restore_from_latest_backup<D: AsRef<Path>, W: AsRef<Path>>(
 		&mut self,
-		db_dir:D,
-		wal_dir:W,
-		opts:&RestoreOptions,
+		db_dir: D,
+		wal_dir: W,
+		opts: &RestoreOptions,
 	) -> Result<(), Error> {
 		let c_db_dir = to_cpath(db_dir)?;
 		let c_wal_dir = to_cpath(wal_dir)?;
@@ -147,12 +147,12 @@ impl BackupEngine {
 	/// Restore from a specified backup
 	///
 	/// The specified backup id should be passed in as an additional parameter.
-	pub fn restore_from_backup<D:AsRef<Path>, W:AsRef<Path>>(
+	pub fn restore_from_backup<D: AsRef<Path>, W: AsRef<Path>>(
 		&mut self,
-		db_dir:D,
-		wal_dir:W,
-		opts:&RestoreOptions,
-		backup_id:u32,
+		db_dir: D,
+		wal_dir: W,
+		opts: &RestoreOptions,
+		backup_id: u32,
 	) -> Result<(), Error> {
 		let c_db_dir = to_cpath(db_dir)?;
 		let c_wal_dir = to_cpath(wal_dir)?;
@@ -176,7 +176,7 @@ impl BackupEngine {
 	/// sizes against the number of bytes written to them during creation.
 	/// Otherwise, it compares the files' current sizes against their sizes when
 	/// the BackupEngine was opened.
-	pub fn verify_backup(&self, backup_id:u32) -> Result<(), Error> {
+	pub fn verify_backup(&self, backup_id: u32) -> Result<(), Error> {
 		unsafe {
 			ffi_try!(ffi::rocksdb_backup_engine_verify_backup(self.inner, backup_id,));
 		}
@@ -200,10 +200,10 @@ impl BackupEngine {
 			let mut info = Vec::with_capacity(n as usize);
 			for index in 0..n {
 				info.push(BackupEngineInfo {
-					timestamp:ffi::rocksdb_backup_engine_info_timestamp(i, index),
-					backup_id:ffi::rocksdb_backup_engine_info_backup_id(i, index),
-					size:ffi::rocksdb_backup_engine_info_size(i, index),
-					num_files:ffi::rocksdb_backup_engine_info_number_files(i, index),
+					timestamp: ffi::rocksdb_backup_engine_info_timestamp(i, index),
+					backup_id: ffi::rocksdb_backup_engine_info_backup_id(i, index),
+					size: ffi::rocksdb_backup_engine_info_size(i, index),
+					num_files: ffi::rocksdb_backup_engine_info_number_files(i, index),
 				});
 			}
 
@@ -218,7 +218,7 @@ impl BackupEngine {
 impl BackupEngineOptions {
 	/// Initializes `BackupEngineOptions` with the directory to be used for
 	/// storing/accessing the backup files.
-	pub fn new<P:AsRef<Path>>(backup_dir:P) -> Result<Self, Error> {
+	pub fn new<P: AsRef<Path>>(backup_dir: P) -> Result<Self, Error> {
 		let backup_dir = backup_dir.as_ref();
 		let c_backup_dir = CString::new(backup_dir.to_string_lossy().as_bytes()).map_err(|_| {
 			Error::new("Failed to convert backup_dir to CString when constructing BackupEngineOptions".to_owned())
@@ -228,7 +228,7 @@ impl BackupEngineOptions {
 			let opts = ffi::rocksdb_backup_engine_options_create(c_backup_dir.as_ptr());
 			assert!(!opts.is_null(), "Could not create RocksDB backup options");
 
-			Ok(Self { inner:opts })
+			Ok(Self { inner: opts })
 		}
 	}
 
@@ -237,7 +237,7 @@ impl BackupEngineOptions {
 	/// restore.
 	///
 	/// Default: 1
-	pub fn set_max_background_operations(&mut self, max_background_operations:i32) {
+	pub fn set_max_background_operations(&mut self, max_background_operations: i32) {
 		unsafe {
 			ffi::rocksdb_backup_engine_options_set_max_background_operations(self.inner, max_background_operations);
 		}
@@ -252,7 +252,7 @@ impl RestoreOptions {
 	/// databases.
 	///
 	/// Default: false
-	pub fn set_keep_log_files(&mut self, keep_log_files:bool) {
+	pub fn set_keep_log_files(&mut self, keep_log_files: bool) {
 		unsafe {
 			ffi::rocksdb_restore_options_set_keep_log_files(self.inner, i32::from(keep_log_files));
 		}
@@ -265,7 +265,7 @@ impl Default for RestoreOptions {
 			let opts = ffi::rocksdb_restore_options_create();
 			assert!(!opts.is_null(), "Could not create RocksDB restore options");
 
-			Self { inner:opts }
+			Self { inner: opts }
 		}
 	}
 }

@@ -26,35 +26,11 @@ use std::{
 
 use pretty_assertions::assert_eq;
 use rocksdb::{
-	BlockBasedOptions,
-	BottommostLevelCompaction,
-	Cache,
-	ColumnFamilyDescriptor,
-	ColumnFamilyTtl,
-	CompactOptions,
-	CuckooTableOptions,
-	DB,
-	DBAccess,
-	DBCompactionStyle,
-	DBWithThreadMode,
-	DEFAULT_COLUMN_FAMILY_NAME,
-	Env,
-	Error,
-	ErrorKind,
-	FifoCompactOptions,
-	IteratorMode,
-	MultiThreaded,
-	Options,
-	PerfContext,
-	PerfMetric,
-	ReadOptions,
-	SingleThreaded,
-	SliceTransform,
-	Snapshot,
-	UniversalCompactOptions,
-	UniversalCompactionStopStyle,
-	WaitForCompactOptions,
-	WriteBatch,
+	BlockBasedOptions, BottommostLevelCompaction, Cache, ColumnFamilyDescriptor, ColumnFamilyTtl, CompactOptions,
+	CuckooTableOptions, DB, DBAccess, DBCompactionStyle, DBWithThreadMode, DEFAULT_COLUMN_FAMILY_NAME, Env, Error,
+	ErrorKind, FifoCompactOptions, IteratorMode, MultiThreaded, Options, PerfContext, PerfMetric, ReadOptions,
+	SingleThreaded, SliceTransform, Snapshot, UniversalCompactOptions, UniversalCompactionStopStyle,
+	WaitForCompactOptions, WriteBatch,
 	perf::get_memory_usage_stats,
 	statistics::{Histogram, StatsLevel, Ticker},
 };
@@ -69,7 +45,7 @@ fn external() {
 
 		assert!(db.put(b"k1", b"v1111").is_ok());
 
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 
 		assert_eq!(r.unwrap().unwrap(), b"v1111");
 		assert!(db.delete(b"k1").is_ok());
@@ -92,7 +68,9 @@ fn db_vector_as_ref_byte_slice() {
 	}
 }
 
-fn get_byte_slice<T:AsRef<[u8]>>(source:&'_ T) -> &'_ [u8] { source.as_ref() }
+fn get_byte_slice<T: AsRef<[u8]>>(source: &'_ T) -> &'_ [u8] {
+	source.as_ref()
+}
 
 #[test]
 fn errors_do_stuff() {
@@ -130,7 +108,7 @@ fn writebatch_works() {
 			assert!(db.get(b"k1").unwrap().is_none());
 			let p = db.write(batch);
 			assert!(p.is_ok());
-			let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+			let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 			assert_eq!(r.unwrap().unwrap(), b"v1111");
 		}
 		{
@@ -289,15 +267,18 @@ fn snapshot_test() {
 
 #[derive(Clone)]
 struct SnapshotWrapper<'db> {
-	snapshot:Arc<Snapshot<'db>>,
+	snapshot: Arc<Snapshot<'db>>,
 }
 
 impl<'db> SnapshotWrapper<'db> {
-	fn new(db:&'db DB) -> Self { Self { snapshot:Arc::new(db.snapshot()) } }
+	fn new(db: &'db DB) -> Self {
+		Self { snapshot: Arc::new(db.snapshot()) }
+	}
 
-	fn check<K>(&self, key:K, value:&[u8]) -> bool
+	fn check<K>(&self, key: K, value: &[u8]) -> bool
 	where
-		K: AsRef<[u8]>, {
+		K: AsRef<[u8]>,
+	{
 		self.snapshot.get(key).unwrap().unwrap() == value
 	}
 }
@@ -441,14 +422,18 @@ fn test_sequence_number() {
 }
 
 struct OperationCounts {
-	puts:usize,
-	deletes:usize,
+	puts: usize,
+	deletes: usize,
 }
 
 impl rocksdb::WriteBatchIterator for OperationCounts {
-	fn put(&mut self, _key:Box<[u8]>, _value:Box<[u8]>) { self.puts += 1; }
+	fn put(&mut self, _key: Box<[u8]>, _value: Box<[u8]>) {
+		self.puts += 1;
+	}
 
-	fn delete(&mut self, _key:Box<[u8]>) { self.deletes += 1; }
+	fn delete(&mut self, _key: Box<[u8]>) {
+		self.deletes += 1;
+	}
 }
 
 #[test]
@@ -472,7 +457,7 @@ fn test_get_updates_since_start() {
 	db.put(b"key3", b"value3").unwrap();
 	db.put(b"key4", b"value4").unwrap();
 	let mut iter = db.get_updates_since(seq0).unwrap();
-	let mut counts = OperationCounts { puts:0, deletes:0 };
+	let mut counts = OperationCounts { puts: 0, deletes: 0 };
 	let (seq, batch) = iter.next().unwrap().unwrap();
 	assert_eq!(seq, 1);
 	batch.iterate(&mut counts);
@@ -502,7 +487,7 @@ fn test_get_updates_since_multiple_batches() {
 	db.put(b"key3", b"value3").unwrap();
 	db.put(b"key4", b"value4").unwrap();
 	let mut iter = db.get_updates_since(seq1).unwrap();
-	let mut counts = OperationCounts { puts:0, deletes:0 };
+	let mut counts = OperationCounts { puts: 0, deletes: 0 };
 	let (seq, batch) = iter.next().unwrap().unwrap();
 	assert_eq!(seq, 2);
 	batch.iterate(&mut counts);
@@ -533,7 +518,7 @@ fn test_get_updates_since_one_batch() {
 		db.write(batch).unwrap();
 		assert_eq!(db.latest_sequence_number(), 3);
 		let mut iter = db.get_updates_since(seq1).unwrap();
-		let mut counts = OperationCounts { puts:0, deletes:0 };
+		let mut counts = OperationCounts { puts: 0, deletes: 0 };
 		let (seq, batch) = iter.next().unwrap().unwrap();
 		assert_eq!(seq, 2);
 		batch.iterate(&mut counts);
@@ -562,7 +547,7 @@ fn test_get_updates_since_batches() {
 	db.write(batch).unwrap();
 	assert_eq!(db.latest_sequence_number(), 5);
 	let mut iter = db.get_updates_since(seq2).unwrap();
-	let mut counts = OperationCounts { puts:0, deletes:0 };
+	let mut counts = OperationCounts { puts: 0, deletes: 0 };
 	// Verify we get the 2nd batch with 2 puts back and not the first
 	let (seq, batch) = iter.next().unwrap().unwrap();
 	assert_eq!(seq, 4);
@@ -755,7 +740,7 @@ fn test_open_utf8_path() {
 
 		assert!(db.put(b"k1", b"v1111").is_ok());
 
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 
 		assert_eq!(r.unwrap().unwrap(), b"v1111");
 		assert!(db.delete(b"k1").is_ok());
@@ -871,7 +856,7 @@ fn wait_for_compact_test() {
 		opts.create_missing_column_families(true);
 
 		// set wait for compact options
-		let mut wait_for_compact_opts:WaitForCompactOptions = WaitForCompactOptions::default();
+		let mut wait_for_compact_opts: WaitForCompactOptions = WaitForCompactOptions::default();
 		wait_for_compact_opts.set_abort_on_pause(false);
 		wait_for_compact_opts.set_flush(true);
 
@@ -1315,7 +1300,7 @@ fn multi_get() {
 
 		let _ = db.multi_get([b"k0"; 40]);
 
-		let assert_values = |values:Vec<_>| {
+		let assert_values = |values: Vec<_>| {
 			assert_eq!(3, values.len());
 			assert_eq!(values[0], None);
 			assert_eq!(values[1], Some(b"v1".to_vec()));
@@ -1504,10 +1489,10 @@ fn cuckoo() {
 		let db = DB::open(&opts, &path).unwrap();
 		db.put(b"k1", b"v1").unwrap();
 		db.put(b"k2", b"v2").unwrap();
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 
 		assert_eq!(r.unwrap().unwrap(), b"v1");
-		let r:Result<Option<Vec<u8>>, Error> = db.get(b"k2");
+		let r: Result<Option<Vec<u8>>, Error> = db.get(b"k2");
 
 		assert_eq!(r.unwrap().unwrap(), b"v2");
 		assert!(db.delete(b"k1").is_ok());
@@ -1517,7 +1502,7 @@ fn cuckoo() {
 
 #[derive(Default)]
 struct EvilAsRef {
-	toggle:AtomicUsize,
+	toggle: AtomicUsize,
 }
 
 impl AsRef<[u8]> for EvilAsRef {
@@ -1535,7 +1520,7 @@ fn evil_as_ref() {
 	let path = DBPath::new("_rust_rocksdb_evil_as_ref");
 	let db = DB::open_default(&path).unwrap();
 
-	let evil = EvilAsRef { toggle:AtomicUsize::new(0) };
+	let evil = EvilAsRef { toggle: AtomicUsize::new(0) };
 
 	let result = &db.multi_get([evil])[0];
 	assert!(result.as_ref().unwrap().is_none());

@@ -23,7 +23,7 @@ use crate::{ffi, ffi_util::CStrLike};
 /// to store prefix blooms by setting prefix_extractor in
 /// ColumnFamilyOptions.
 pub struct SliceTransform {
-	pub inner:*mut ffi::rocksdb_slicetransform_t,
+	pub inner: *mut ffi::rocksdb_slicetransform_t,
 }
 
 // NB we intentionally don't implement a Drop that passes
@@ -33,9 +33,9 @@ pub struct SliceTransform {
 // opening a DB.
 
 impl SliceTransform {
-	pub fn create(name:impl CStrLike, transform_fn:TransformFn, in_domain_fn:Option<InDomainFn>) -> SliceTransform {
+	pub fn create(name: impl CStrLike, transform_fn: TransformFn, in_domain_fn: Option<InDomainFn>) -> SliceTransform {
 		let cb = Box::into_raw(Box::new(TransformCallback {
-			name:name.into_c_string().unwrap(),
+			name: name.into_c_string().unwrap(),
 			transform_fn,
 			in_domain_fn,
 		}));
@@ -52,15 +52,15 @@ impl SliceTransform {
 			)
 		};
 
-		SliceTransform { inner:st }
+		SliceTransform { inner: st }
 	}
 
-	pub fn create_fixed_prefix(len:size_t) -> SliceTransform {
-		SliceTransform { inner:unsafe { ffi::rocksdb_slicetransform_create_fixed_prefix(len) } }
+	pub fn create_fixed_prefix(len: size_t) -> SliceTransform {
+		SliceTransform { inner: unsafe { ffi::rocksdb_slicetransform_create_fixed_prefix(len) } }
 	}
 
 	pub fn create_noop() -> SliceTransform {
-		SliceTransform { inner:unsafe { ffi::rocksdb_slicetransform_create_noop() } }
+		SliceTransform { inner: unsafe { ffi::rocksdb_slicetransform_create_noop() } }
 	}
 }
 
@@ -68,25 +68,25 @@ pub type TransformFn<'a> = fn(&'a [u8]) -> &'a [u8];
 pub type InDomainFn = fn(&[u8]) -> bool;
 
 pub struct TransformCallback<'a> {
-	pub name:CString,
-	pub transform_fn:TransformFn<'a>,
-	pub in_domain_fn:Option<InDomainFn>,
+	pub name: CString,
+	pub transform_fn: TransformFn<'a>,
+	pub in_domain_fn: Option<InDomainFn>,
 }
 
-pub unsafe extern "C" fn slice_transform_destructor_callback(raw_cb:*mut c_void) {
+pub unsafe extern fn slice_transform_destructor_callback(raw_cb: *mut c_void) {
 	drop(unsafe { Box::from_raw(raw_cb as *mut TransformCallback) });
 }
 
-pub unsafe extern "C" fn slice_transform_name_callback(raw_cb:*mut c_void) -> *const c_char {
+pub unsafe extern fn slice_transform_name_callback(raw_cb: *mut c_void) -> *const c_char {
 	let cb = unsafe { &mut *(raw_cb as *mut TransformCallback) };
 	cb.name.as_ptr()
 }
 
-pub unsafe extern "C" fn transform_callback(
-	raw_cb:*mut c_void,
-	raw_key:*const c_char,
-	key_len:size_t,
-	dst_length:*mut size_t,
+pub unsafe extern fn transform_callback(
+	raw_cb: *mut c_void,
+	raw_key: *const c_char,
+	key_len: size_t,
+	dst_length: *mut size_t,
 ) -> *mut c_char {
 	let cb = unsafe { &mut *(raw_cb as *mut TransformCallback) };
 	let key = unsafe { slice::from_raw_parts(raw_key as *const u8, key_len) };
@@ -95,7 +95,7 @@ pub unsafe extern "C" fn transform_callback(
 	prefix.as_ptr() as *mut c_char
 }
 
-pub unsafe extern "C" fn in_domain_callback(raw_cb:*mut c_void, raw_key:*const c_char, key_len:size_t) -> c_uchar {
+pub unsafe extern fn in_domain_callback(raw_cb: *mut c_void, raw_key: *const c_char, key_len: size_t) -> c_uchar {
 	let cb = unsafe { &mut *(raw_cb as *mut TransformCallback) };
 	let key = unsafe { slice::from_raw_parts(raw_key as *const u8, key_len) };
 	c_uchar::from(cb.in_domain_fn.map_or(true, |in_domain| in_domain(key)))

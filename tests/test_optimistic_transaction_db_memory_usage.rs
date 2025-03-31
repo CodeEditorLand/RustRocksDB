@@ -32,7 +32,7 @@ fn test_optimistic_transaction_db_memory_usage() {
 		block_based_options.set_block_cache(&cache);
 		options.set_block_based_table_factory(&block_based_options);
 
-		let db:OptimisticTransactionDB<SingleThreaded> = OptimisticTransactionDB::open(&options, &path).unwrap();
+		let db: OptimisticTransactionDB<SingleThreaded> = OptimisticTransactionDB::open(&options, &path).unwrap();
 		let mut builder = rocksdb::perf::MemoryUsageBuilder::new().unwrap();
 		builder.add_db(&db);
 		builder.add_cache(&cache);

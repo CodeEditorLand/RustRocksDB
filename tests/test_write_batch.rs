@@ -32,11 +32,11 @@ fn test_write_batch_clear() {
 #[test]
 fn test_write_batch_with_serialized_data() {
 	struct Iterator {
-		data:HashMap<Vec<u8>, Vec<u8>>,
+		data: HashMap<Vec<u8>, Vec<u8>>,
 	}
 
 	impl WriteBatchIterator for Iterator {
-		fn put(&mut self, key:Box<[u8]>, value:Box<[u8]>) {
+		fn put(&mut self, key: Box<[u8]>, value: Box<[u8]>) {
 			match self.data.remove(key.as_ref()) {
 				Some(expect) => {
 					assert_eq!(value.as_ref(), expect.as_slice());
@@ -47,12 +47,12 @@ fn test_write_batch_with_serialized_data() {
 			}
 		}
 
-		fn delete(&mut self, _:Box<[u8]>) {
+		fn delete(&mut self, _: Box<[u8]>) {
 			panic!("invalid delete operation");
 		}
 	}
 
-	let mut kvs:HashMap<Vec<u8>, Vec<u8>> = HashMap::default();
+	let mut kvs: HashMap<Vec<u8>, Vec<u8>> = HashMap::default();
 	kvs.insert(vec![1], vec![2]);
 	kvs.insert(vec![2], vec![3]);
 	kvs.insert(vec![1, 2, 3, 4, 5], vec![4]);
@@ -64,7 +64,7 @@ fn test_write_batch_with_serialized_data() {
 	let data = b1.data();
 
 	let b2 = WriteBatch::from_data(data);
-	let mut it = Iterator { data:kvs };
+	let mut it = Iterator { data: kvs };
 	b2.iterate(&mut it);
 }
 
@@ -80,7 +80,7 @@ fn test_write_batch_put_log_data() {
 	let p = db.write(batch);
 	assert!(p.is_ok());
 
-	let r:Result<Option<Vec<u8>>, Error> = db.get(b"k1");
+	let r: Result<Option<Vec<u8>>, Error> = db.get(b"k1");
 	assert_eq!(r.unwrap().unwrap(), b"v11111111");
 
 	let mut called = false;

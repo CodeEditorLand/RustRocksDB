@@ -29,9 +29,7 @@ use std::{
 	ffi::{CStr, CString},
 	io::Write,
 	path::PathBuf,
-	ptr,
-	slice,
-	str,
+	ptr, slice, str,
 };
 
 use libc::*;
@@ -44,24 +42,26 @@ macro_rules! err_println {
 
 macro_rules! cstrp {
 	($s:expr) => {{
-		static CSTR:&CStr = unsafe { CStr::from_bytes_with_nul_unchecked(concat!($s, "\0").as_bytes()) };
+		static CSTR: &CStr = unsafe { CStr::from_bytes_with_nul_unchecked(concat!($s, "\0").as_bytes()) };
 		CSTR.as_ptr()
 	}};
 }
 
-static mut phase:&'static str = "";
+static mut phase: &'static str = "";
 // static mut dbname: *mut c_uchar = ptr::null_mut();
 // static mut dbbackupname: *mut c_uchar = ptr::null_mut();
 
-unsafe fn strndup(s:*const c_char, n:size_t) -> *mut c_char {
-	let r:*mut c_char = malloc(n + 1) as *mut c_char;
+unsafe fn strndup(s: *const c_char, n: size_t) -> *mut c_char {
+	let r: *mut c_char = malloc(n + 1) as *mut c_char;
 	if r.is_null() {
 		return r;
 	}
 	strncpy(r, s, n)
 }
 
-unsafe fn rstr<'a>(s:*const c_char) -> Cow<'a, str> { CStr::from_ptr(s).to_string_lossy() }
+unsafe fn rstr<'a>(s: *const c_char) -> Cow<'a, str> {
+	CStr::from_ptr(s).to_string_lossy()
+}
 
 fn GetTempDir() -> PathBuf {
 	option_env!("TEST_TMPDIR")
@@ -70,7 +70,7 @@ fn GetTempDir() -> PathBuf {
 		.unwrap_or_else(|| env::temp_dir())
 }
 
-unsafe fn StartPhase(name:&'static str) {
+unsafe fn StartPhase(name: &'static str) {
 	err_println!("=== Test {}\n", name);
 	phase = name;
 }
@@ -91,7 +91,7 @@ macro_rules! CheckCondition {
 	};
 }
 
-unsafe fn CheckEqual(expected:*const c_char, actual:*const c_char, n:size_t) {
+unsafe fn CheckEqual(expected: *const c_char, actual: *const c_char, n: size_t) {
 	let is_equal = if expected.is_null() && actual.is_null() {
 		true
 	} else if !expected.is_null()
@@ -114,7 +114,7 @@ unsafe fn CheckEqual(expected:*const c_char, actual:*const c_char, n:size_t) {
 	}
 }
 
-unsafe fn Free<T>(ptr:*mut *mut T) {
+unsafe fn Free<T>(ptr: *mut *mut T) {
 	if !(*ptr).is_null() {
 		free(*ptr as *mut c_void);
 		*ptr = ptr::null_mut();
@@ -122,37 +122,37 @@ unsafe fn Free<T>(ptr:*mut *mut T) {
 }
 
 unsafe fn CheckGet(
-	mut db:*mut rocksdb_t,
-	options:*mut rocksdb_readoptions_t,
-	key:*const c_char,
-	expected:*const c_char,
+	mut db: *mut rocksdb_t,
+	options: *mut rocksdb_readoptions_t,
+	key: *const c_char,
+	expected: *const c_char,
 ) {
-	let mut err:*mut c_char = ptr::null_mut();
-	let mut val_len:size_t = 0;
-	let mut val:*mut c_char = rocksdb_get(db, options, key, strlen(key), &mut val_len, &mut err);
+	let mut err: *mut c_char = ptr::null_mut();
+	let mut val_len: size_t = 0;
+	let mut val: *mut c_char = rocksdb_get(db, options, key, strlen(key), &mut val_len, &mut err);
 	CheckNoError!(err);
 	CheckEqual(expected, val, val_len);
 	Free(&mut val);
 }
 
 unsafe fn CheckGetCF(
-	db:*mut rocksdb_t,
-	options:*const rocksdb_readoptions_t,
-	handle:*mut rocksdb_column_family_handle_t,
-	key:*const c_char,
-	expected:*const c_char,
+	db: *mut rocksdb_t,
+	options: *const rocksdb_readoptions_t,
+	handle: *mut rocksdb_column_family_handle_t,
+	key: *const c_char,
+	expected: *const c_char,
 ) {
-	let mut err:*mut c_char = ptr::null_mut();
-	let mut val_len:size_t = 0;
-	let mut val:*mut c_char = rocksdb_get_cf(db, options, handle, key, strlen(key), &mut val_len, &mut err);
+	let mut err: *mut c_char = ptr::null_mut();
+	let mut val_len: size_t = 0;
+	let mut val: *mut c_char = rocksdb_get_cf(db, options, handle, key, strlen(key), &mut val_len, &mut err);
 	CheckNoError!(err);
 	CheckEqual(expected, val, val_len);
 	Free(&mut val);
 }
 
-unsafe fn CheckIter(iter:*mut rocksdb_iterator_t, key:*const c_char, val:*const c_char) {
-	let mut len:size_t = 0;
-	let mut str:*const c_char;
+unsafe fn CheckIter(iter: *mut rocksdb_iterator_t, key: *const c_char, val: *const c_char) {
+	let mut len: size_t = 0;
+	let mut str: *const c_char;
 	str = rocksdb_iter_key(iter, &mut len);
 	CheckEqual(key, str, len);
 	str = rocksdb_iter_value(iter, &mut len);
@@ -160,8 +160,8 @@ unsafe fn CheckIter(iter:*mut rocksdb_iterator_t, key:*const c_char, val:*const 
 }
 
 // Callback from rocksdb_writebatch_iterate()
-unsafe extern "C" fn CheckPut(ptr:*mut c_void, k:*const c_char, klen:size_t, v:*const c_char, vlen:size_t) {
-	let mut state:*mut c_int = ptr as *mut c_int;
+unsafe extern fn CheckPut(ptr: *mut c_void, k: *const c_char, klen: size_t, v: *const c_char, vlen: size_t) {
+	let mut state: *mut c_int = ptr as *mut c_int;
 	CheckCondition!(*state < 2);
 	match *state {
 		0 => {
@@ -178,16 +178,16 @@ unsafe extern "C" fn CheckPut(ptr:*mut c_void, k:*const c_char, klen:size_t, v:*
 }
 
 // Callback from rocksdb_writebatch_iterate()
-unsafe extern "C" fn CheckDel(ptr:*mut c_void, k:*const c_char, klen:size_t) {
-	let mut state:*mut c_int = ptr as *mut c_int;
+unsafe extern fn CheckDel(ptr: *mut c_void, k: *const c_char, klen: size_t) {
+	let mut state: *mut c_int = ptr as *mut c_int;
 	CheckCondition!(*state == 2);
 	CheckEqual(cstrp!("bar"), k, klen);
 	*state += 1;
 }
 
-unsafe extern "C" fn CmpDestroy(arg:*mut c_void) {}
+unsafe extern fn CmpDestroy(arg: *mut c_void) {}
 
-unsafe extern "C" fn CmpCompare(arg:*mut c_void, a:*const c_char, alen:size_t, b:*const c_char, blen:size_t) -> c_int {
+unsafe extern fn CmpCompare(arg: *mut c_void, a: *const c_char, alen: size_t, b: *const c_char, blen: size_t) -> c_int {
 	let n = if alen < blen { alen } else { blen };
 	let mut r = memcmp(a as *const c_void, b as *const c_void, n);
 	if r == 0 {
@@ -200,26 +200,30 @@ unsafe extern "C" fn CmpCompare(arg:*mut c_void, a:*const c_char, alen:size_t, b
 	r
 }
 
-unsafe extern "C" fn CmpName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
+unsafe extern fn CmpName(arg: *mut c_void) -> *const c_char {
+	cstrp!("foo")
+}
 
 // Custom compaction filter
 
-static mut fake_filter_result:c_uchar = 1;
+static mut fake_filter_result: c_uchar = 1;
 
-unsafe extern "C" fn CFilterDestroy(arg:*mut c_void) {}
+unsafe extern fn CFilterDestroy(arg: *mut c_void) {}
 
-unsafe extern "C" fn CFilterName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
+unsafe extern fn CFilterName(arg: *mut c_void) -> *const c_char {
+	cstrp!("foo")
+}
 
-unsafe extern "C" fn CFilterFilter(
-	arg:*mut c_void,
-	level:c_int,
-	key:*const c_char,
-	key_length:size_t,
-	existing_value:*const c_char,
-	value_length:size_t,
-	new_value:*mut *mut c_char,
-	new_value_length:*mut size_t,
-	value_changed:*mut u8,
+unsafe extern fn CFilterFilter(
+	arg: *mut c_void,
+	level: c_int,
+	key: *const c_char,
+	key_length: size_t,
+	existing_value: *const c_char,
+	value_length: size_t,
+	new_value: *mut *mut c_char,
+	new_value_length: *mut size_t,
+	value_changed: *mut u8,
 ) -> c_uchar {
 	if key_length == 3 {
 		if memcmp(key.cast::<c_void>(), cstrp!("bar").cast::<c_void>(), key_length) == 0 {
@@ -234,25 +238,27 @@ unsafe extern "C" fn CFilterFilter(
 	0
 }
 
-unsafe extern "C" fn CFilterFactoryDestroy(arg:*mut c_void) {}
+unsafe extern fn CFilterFactoryDestroy(arg: *mut c_void) {}
 
-unsafe extern "C" fn CFilterFactoryName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
+unsafe extern fn CFilterFactoryName(arg: *mut c_void) -> *const c_char {
+	cstrp!("foo")
+}
 
-unsafe extern "C" fn CFilterCreate(
-	arg:*mut c_void,
-	context:*mut rocksdb_compactionfiltercontext_t,
+unsafe extern fn CFilterCreate(
+	arg: *mut c_void,
+	context: *mut rocksdb_compactionfiltercontext_t,
 ) -> *mut rocksdb_compactionfilter_t {
 	rocksdb_compactionfilter_create(ptr::null_mut(), Some(CFilterDestroy), Some(CFilterFilter), Some(CFilterName))
 }
 
 unsafe fn CheckCompaction(
-	dbname:*const c_char,
-	db:*mut rocksdb_t,
-	options:*const rocksdb_options_t,
-	roptions:*mut rocksdb_readoptions_t,
-	woptions:*mut rocksdb_writeoptions_t,
+	dbname: *const c_char,
+	db: *mut rocksdb_t,
+	options: *const rocksdb_options_t,
+	roptions: *mut rocksdb_readoptions_t,
+	woptions: *mut rocksdb_writeoptions_t,
 ) -> *mut rocksdb_t {
-	let mut err:*mut c_char = ptr::null_mut();
+	let mut err: *mut c_char = ptr::null_mut();
 	let db = rocksdb_open(options, dbname, &mut err);
 	CheckNoError!(err);
 	rocksdb_put(db, woptions, cstrp!("foo"), 3, cstrp!("foovalue"), 8, &mut err);
@@ -276,42 +282,44 @@ unsafe fn CheckCompaction(
 
 // Custom merge operator
 
-unsafe extern "C" fn MergeOperatorDestroy(arg:*mut c_void) {}
+unsafe extern fn MergeOperatorDestroy(arg: *mut c_void) {}
 
-unsafe extern "C" fn MergeOperatorName(arg:*mut c_void) -> *const c_char { cstrp!("foo") }
+unsafe extern fn MergeOperatorName(arg: *mut c_void) -> *const c_char {
+	cstrp!("foo")
+}
 
-unsafe extern "C" fn MergeOperatorFullMerge(
-	arg:*mut c_void,
-	key:*const c_char,
-	key_length:size_t,
-	existing_value:*const c_char,
-	existing_value_length:size_t,
-	operands_list:*const *const c_char,
-	operands_list_length:*const size_t,
-	num_operands:c_int,
-	success:*mut u8,
-	new_value_length:*mut size_t,
+unsafe extern fn MergeOperatorFullMerge(
+	arg: *mut c_void,
+	key: *const c_char,
+	key_length: size_t,
+	existing_value: *const c_char,
+	existing_value_length: size_t,
+	operands_list: *const *const c_char,
+	operands_list_length: *const size_t,
+	num_operands: c_int,
+	success: *mut u8,
+	new_value_length: *mut size_t,
 ) -> *mut c_char {
 	*new_value_length = 4;
 	*success = 1;
-	let result:*mut c_char = malloc(4) as *mut _;
+	let result: *mut c_char = malloc(4) as *mut _;
 	memcpy(result as *mut _, cstrp!("fake") as *mut _, 4);
 	result
 }
 
-unsafe extern "C" fn MergeOperatorPartialMerge(
-	arg:*mut c_void,
-	key:*const c_char,
-	key_length:size_t,
-	operands_list:*const *const c_char,
-	operands_list_length:*const size_t,
-	num_operands:c_int,
-	success:*mut u8,
-	new_value_length:*mut size_t,
+unsafe extern fn MergeOperatorPartialMerge(
+	arg: *mut c_void,
+	key: *const c_char,
+	key_length: size_t,
+	operands_list: *const *const c_char,
+	operands_list_length: *const size_t,
+	num_operands: c_int,
+	success: *mut u8,
+	new_value_length: *mut size_t,
 ) -> *mut c_char {
 	*new_value_length = 4;
 	*success = 1;
-	let result:*mut c_char = malloc(4) as *mut _;
+	let result: *mut c_char = malloc(4) as *mut _;
 	memcpy(result as *mut _, cstrp!("fake") as *const _, 4);
 	result
 }
@@ -319,16 +327,16 @@ unsafe extern "C" fn MergeOperatorPartialMerge(
 #[test]
 fn ffi() {
 	unsafe {
-		let mut db:*mut rocksdb_t;
-		let mut cmp:*mut rocksdb_comparator_t;
-		let mut cache:*mut rocksdb_cache_t;
-		let mut env:*mut rocksdb_env_t;
-		let mut options:*mut rocksdb_options_t;
-		let mut table_options:*mut rocksdb_block_based_table_options_t;
-		let mut roptions:*mut rocksdb_readoptions_t;
-		let mut woptions:*mut rocksdb_writeoptions_t;
-		let mut err:*mut c_char = ptr::null_mut();
-		let run:c_int = -1;
+		let mut db: *mut rocksdb_t;
+		let mut cmp: *mut rocksdb_comparator_t;
+		let mut cache: *mut rocksdb_cache_t;
+		let mut env: *mut rocksdb_env_t;
+		let mut options: *mut rocksdb_options_t;
+		let mut table_options: *mut rocksdb_block_based_table_options_t;
+		let mut roptions: *mut rocksdb_readoptions_t;
+		let mut woptions: *mut rocksdb_writeoptions_t;
+		let mut err: *mut c_char = ptr::null_mut();
+		let run: c_int = -1;
 
 		let test_uuid = Uuid::new_v4().simple();
 
@@ -420,14 +428,14 @@ fn ffi() {
 			rocksdb_backup_engine_create_new_backup(be, db, &mut err);
 			CheckNoError!(err);
 
-			let bei:*const rocksdb_backup_engine_info_t = rocksdb_backup_engine_get_backup_info(be);
+			let bei: *const rocksdb_backup_engine_info_t = rocksdb_backup_engine_get_backup_info(be);
 			CheckCondition!(rocksdb_backup_engine_info_count(bei) > 1);
 			rocksdb_backup_engine_info_destroy(bei);
 
 			rocksdb_backup_engine_purge_old_backups(be, 1, &mut err);
 			CheckNoError!(err);
 
-			let bei:*const rocksdb_backup_engine_info_t = rocksdb_backup_engine_get_backup_info(be);
+			let bei: *const rocksdb_backup_engine_info_t = rocksdb_backup_engine_get_backup_info(be);
 			CheckCondition!(rocksdb_backup_engine_info_count(bei) == 1);
 			rocksdb_backup_engine_info_destroy(bei);
 
@@ -476,7 +484,7 @@ fn ffi() {
 			CheckGet(db, roptions, cstrp!("foo"), cstrp!("hello"));
 			CheckGet(db, roptions, cstrp!("bar"), ptr::null());
 			CheckGet(db, roptions, cstrp!("box"), cstrp!("c"));
-			let mut pos:c_int = 0;
+			let mut pos: c_int = 0;
 			rocksdb_writebatch_iterate(wb, (&mut pos as *mut c_int).cast::<c_void>(), Some(CheckPut), Some(CheckDel));
 			CheckCondition!(pos == 3);
 			rocksdb_writebatch_destroy(wb);
@@ -485,10 +493,10 @@ fn ffi() {
 		StartPhase("writebatch_vectors");
 		{
 			let wb = rocksdb_writebatch_create();
-			let k_list:[*const c_char; 2] = [cstrp!("z"), cstrp!("ap")];
-			let k_sizes:[size_t; 2] = [1, 2];
-			let v_list:[*const c_char; 3] = [cstrp!("x"), cstrp!("y"), cstrp!("z")];
-			let v_sizes:[size_t; 3] = [1, 1, 1];
+			let k_list: [*const c_char; 2] = [cstrp!("z"), cstrp!("ap")];
+			let k_sizes: [size_t; 2] = [1, 2];
+			let v_list: [*const c_char; 3] = [cstrp!("x"), cstrp!("y"), cstrp!("z")];
+			let v_sizes: [size_t; 3] = [1, 1, 1];
 			rocksdb_writebatch_putv(
 				wb,
 				k_list.len() as c_int,
@@ -510,15 +518,15 @@ fn ffi() {
 
 		StartPhase("writebatch_rep");
 		{
-			let wb1:*mut rocksdb_writebatch_t = rocksdb_writebatch_create();
+			let wb1: *mut rocksdb_writebatch_t = rocksdb_writebatch_create();
 			rocksdb_writebatch_put(wb1, cstrp!("baz"), 3, cstrp!("d"), 1);
 			rocksdb_writebatch_put(wb1, cstrp!("quux"), 4, cstrp!("e"), 1);
 			rocksdb_writebatch_delete(wb1, cstrp!("quux"), 4);
-			let mut repsize1:size_t = 0;
+			let mut repsize1: size_t = 0;
 			let mut rep = rocksdb_writebatch_data(wb1, &mut repsize1) as *const c_void;
 			let mut wb2 = rocksdb_writebatch_create_from(rep as *const c_char, repsize1);
 			CheckCondition!(rocksdb_writebatch_count(wb1) == rocksdb_writebatch_count(wb2));
-			let mut repsize2:size_t = 0;
+			let mut repsize2: size_t = 0;
 			CheckCondition!(memcmp(rep, rocksdb_writebatch_data(wb2, &mut repsize2) as *const c_void, repsize1) == 0);
 			rocksdb_writebatch_destroy(wb1);
 			rocksdb_writebatch_destroy(wb2);
@@ -548,11 +556,11 @@ fn ffi() {
 
 		StartPhase("multiget");
 		{
-			let keys:[*const c_char; 3] = [cstrp!("box"), cstrp!("foo"), cstrp!("notfound")];
-			let keys_sizes:[size_t; 3] = [3, 3, 8];
-			let mut vals:[*mut c_char; 3] = [ptr::null_mut(), ptr::null_mut(), ptr::null_mut()];
-			let mut vals_sizes:[size_t; 3] = [0, 0, 0];
-			let mut errs:[*mut c_char; 3] = [ptr::null_mut(), ptr::null_mut(), ptr::null_mut()];
+			let keys: [*const c_char; 3] = [cstrp!("box"), cstrp!("foo"), cstrp!("notfound")];
+			let keys_sizes: [size_t; 3] = [3, 3, 8];
+			let mut vals: [*mut c_char; 3] = [ptr::null_mut(), ptr::null_mut(), ptr::null_mut()];
+			let mut vals_sizes: [size_t; 3] = [0, 0, 0];
+			let mut errs: [*mut c_char; 3] = [ptr::null_mut(), ptr::null_mut(), ptr::null_mut()];
 			rocksdb_multi_get(
 				db,
 				roptions,
@@ -578,11 +586,11 @@ fn ffi() {
 
 		StartPhase("approximate_sizes");
 		{
-			let mut sizes:[u64; 2] = [0, 0];
-			let start:[*const c_char; 2] = [cstrp!("a"), cstrp!("k00000000000000010000")];
-			let start_len:[size_t; 2] = [1, 21];
-			let limit:[*const c_char; 2] = [cstrp!("k00000000000000010000"), cstrp!("z")];
-			let limit_len:[size_t; 2] = [21, 1];
+			let mut sizes: [u64; 2] = [0, 0];
+			let start: [*const c_char; 2] = [cstrp!("a"), cstrp!("k00000000000000010000")];
+			let start_len: [size_t; 2] = [1, 21];
+			let limit: [*const c_char; 2] = [cstrp!("k00000000000000010000"), cstrp!("z")];
+			let limit_len: [size_t; 2] = [21, 1];
 			rocksdb_writeoptions_set_sync(woptions, 0);
 			for i in 0..20000 {
 				let keybuf = CString::new(format!("k{:020}", i)).unwrap();
@@ -617,7 +625,7 @@ fn ffi() {
 
 		StartPhase("property");
 		{
-			let mut prop:*mut c_char;
+			let mut prop: *mut c_char;
 			prop = rocksdb_property_value(db, cstrp!("nosuchprop"));
 			CheckCondition!(prop.is_null());
 			prop = rocksdb_property_value(db, cstrp!("rocksdb.stats"));
@@ -627,7 +635,7 @@ fn ffi() {
 
 		StartPhase("snapshot");
 		{
-			let snap:*const rocksdb_snapshot_t = rocksdb_create_snapshot(db);
+			let snap: *const rocksdb_snapshot_t = rocksdb_create_snapshot(db);
 			rocksdb_delete(db, woptions, cstrp!("foo"), 3, &mut err);
 			CheckNoError!(err);
 			rocksdb_readoptions_set_snapshot(roptions, snap);
@@ -659,7 +667,7 @@ fn ffi() {
 		StartPhase("filter");
 		for run in 0..2 {
 			CheckNoError!(err);
-			let mut policy:*mut rocksdb_filterpolicy_t = rocksdb_filterpolicy_create_bloom(10.0);
+			let mut policy: *mut rocksdb_filterpolicy_t = rocksdb_filterpolicy_create_bloom(10.0);
 
 			rocksdb_block_based_options_set_filter_policy(table_options, policy);
 
@@ -778,7 +786,7 @@ fn ffi() {
 			CheckNoError!(err);
 			rocksdb_close(db);
 
-			let mut cflen:size_t = 0;
+			let mut cflen: size_t = 0;
 			let column_fams_raw = rocksdb_list_column_families(db_options, dbname, &mut cflen, &mut err);
 			let column_fams = slice::from_raw_parts(column_fams_raw, cflen as usize);
 			CheckEqual(cstrp!("default"), column_fams[0], 7);
@@ -788,9 +796,9 @@ fn ffi() {
 
 			let mut cf_options = rocksdb_options_create();
 
-			let mut cf_names:[*const c_char; 2] = [cstrp!("default"), cstrp!("cf1")];
-			let mut cf_opts:[*const rocksdb_options_t; 2] = [cf_options, cf_options];
-			let mut handles:[*mut rocksdb_column_family_handle_t; 2] = [ptr::null_mut(), ptr::null_mut()];
+			let mut cf_names: [*const c_char; 2] = [cstrp!("default"), cstrp!("cf1")];
+			let mut cf_opts: [*const rocksdb_options_t; 2] = [cf_options, cf_options];
+			let mut handles: [*mut rocksdb_column_family_handle_t; 2] = [ptr::null_mut(), ptr::null_mut()];
 			db = rocksdb_open_column_families(
 				db_options,
 				dbname,
@@ -825,12 +833,12 @@ fn ffi() {
 			CheckGetCF(db, roptions, handles[1], cstrp!("box"), cstrp!("c"));
 			rocksdb_writebatch_destroy(wb);
 
-			let keys:[*const c_char; 3] = [cstrp!("box"), cstrp!("box"), cstrp!("barfooxx")];
-			let get_handles:[*const rocksdb_column_family_handle_t; 3] = [handles[0], handles[1], handles[1]];
-			let keys_sizes:[size_t; 3] = [3, 3, 8];
-			let mut vals:[*mut c_char; 3] = [ptr::null_mut(), ptr::null_mut(), ptr::null_mut()];
-			let mut vals_sizes:[size_t; 3] = [0, 0, 0];
-			let mut errs:[*mut c_char; 3] = [ptr::null_mut(), ptr::null_mut(), ptr::null_mut()];
+			let keys: [*const c_char; 3] = [cstrp!("box"), cstrp!("box"), cstrp!("barfooxx")];
+			let get_handles: [*const rocksdb_column_family_handle_t; 3] = [handles[0], handles[1], handles[1]];
+			let keys_sizes: [size_t; 3] = [3, 3, 8];
+			let mut vals: [*mut c_char; 3] = [ptr::null_mut(), ptr::null_mut(), ptr::null_mut()];
+			let mut vals_sizes: [size_t; 3] = [0, 0, 0];
+			let mut errs: [*mut c_char; 3] = [ptr::null_mut(), ptr::null_mut(), ptr::null_mut()];
 			rocksdb_multi_get_cf(
 				db,
 				roptions,
@@ -859,7 +867,7 @@ fn ffi() {
 			rocksdb_iter_seek_to_first(iter);
 			CheckCondition!(rocksdb_iter_valid(iter) != 0);
 
-			let mut i:u32 = 0;
+			let mut i: u32 = 0;
 			while rocksdb_iter_valid(iter) != 0 {
 				rocksdb_iter_next(iter);
 				i += 1;
@@ -869,8 +877,8 @@ fn ffi() {
 			CheckNoError!(err);
 			rocksdb_iter_destroy(iter);
 
-			let mut iters_cf_handles:[*mut rocksdb_column_family_handle_t; 2] = [handles[0], handles[1]];
-			let mut iters_handles:[*mut rocksdb_iterator_t; 2] = [ptr::null_mut(), ptr::null_mut()];
+			let mut iters_cf_handles: [*mut rocksdb_column_family_handle_t; 2] = [handles[0], handles[1]];
+			let mut iters_handles: [*mut rocksdb_iterator_t; 2] = [ptr::null_mut(), ptr::null_mut()];
 			rocksdb_create_iterators(
 				db,
 				roptions,
@@ -892,7 +900,7 @@ fn ffi() {
 			rocksdb_iter_seek_to_first(iter);
 			CheckCondition!(rocksdb_iter_valid(iter) != 0);
 
-			let mut i:u32 = 0;
+			let mut i: u32 = 0;
 			while rocksdb_iter_valid(iter) != 0 {
 				rocksdb_iter_next(iter);
 				i += 1;

@@ -20,7 +20,7 @@ use util::DBPath;
 
 #[test]
 pub fn test_single_checkpoint() {
-	const PATH_PREFIX:&str = "_rust_rocksdb_cp_single_";
+	const PATH_PREFIX: &str = "_rust_rocksdb_cp_single_";
 
 	// Create DB with some data
 	let db_path = DBPath::new(&format!("{PATH_PREFIX}db1"));
@@ -50,7 +50,7 @@ pub fn test_single_checkpoint() {
 
 #[test]
 pub fn test_multi_checkpoints() {
-	const PATH_PREFIX:&str = "_rust_rocksdb_cp_multi_";
+	const PATH_PREFIX: &str = "_rust_rocksdb_cp_multi_";
 
 	// Create DB with some data
 	let db_path = DBPath::new(&format!("{PATH_PREFIX}db1"));

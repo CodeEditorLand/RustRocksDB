@@ -20,7 +20,7 @@ use util::DBPath;
 
 #[cfg(test)]
 #[allow(unused_variables)]
-fn test_filter(level:u32, key:&[u8], value:&[u8]) -> CompactionDecision {
+fn test_filter(level: u32, key: &[u8], value: &[u8]) -> CompactionDecision {
 	use self::CompactionDecision::*;
 	match key.first() {
 		Some(&b'_') => Remove,

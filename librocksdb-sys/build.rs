@@ -1,18 +1,17 @@
 use std::{
-	env,
-	fs,
+	env, fs,
 	path::{Path, PathBuf},
 	process::Command,
 };
 
 use regex::Regex;
 
-fn link(name:&str, bundled:bool) {
+fn link(name: &str, bundled: bool) {
 	use std::env::var;
 
 	let target = var("TARGET").unwrap();
 
-	let target:Vec<_> = target.split('-').collect();
+	let target: Vec<_> = target.split('-').collect();
 
 	if target.get(2) == Some(&"windows") {
 		println!("cargo:rustc-link-lib=dylib={name}");
@@ -25,7 +24,7 @@ fn link(name:&str, bundled:bool) {
 	}
 }
 
-fn fail_on_empty_directory(name:&str) {
+fn fail_on_empty_directory(name: &str) {
 	if fs::read_dir(name).unwrap().count() == 0 {
 		println!("The `{name}` directory is empty, did you forget to pull the submodules?");
 
@@ -35,7 +34,9 @@ fn fail_on_empty_directory(name:&str) {
 	}
 }
 
-fn rocksdb_include_dir() -> String { env::var("ROCKSDB_INCLUDE_DIR").unwrap_or_else(|_| "rocksdb/include".to_string()) }
+fn rocksdb_include_dir() -> String {
+	env::var("ROCKSDB_INCLUDE_DIR").unwrap_or_else(|_| "rocksdb/include".to_string())
+}
 
 fn bindgen_rocksdb() {
 	let target = env::var("TARGET").unwrap();
@@ -175,7 +176,7 @@ fn build_rocksdb() {
 		// This is needed to enable hardware CRC32C. Technically, SSE 4.2 is
 		// only available since Intel Nehalem (about 2010) and AMD Bulldozer
 		// (about 2011).
-		let target_features:Vec<_> = target_feature_value.split(',').collect();
+		let target_features: Vec<_> = target_feature_value.split(',').collect();
 
 		if target_features.contains(&"sse2") {
 			config.flag_if_supported("-msse2");
@@ -443,7 +444,7 @@ fn build_snappy() {
 	config.compile("libsnappy.a");
 }
 
-fn try_to_find_and_link_lib(lib_name:&str) -> bool {
+fn try_to_find_and_link_lib(lib_name: &str) -> bool {
 	println!("cargo:rerun-if-env-changed={lib_name}_COMPILE");
 
 	if let Ok(v) = env::var(format!("{lib_name}_COMPILE")) {

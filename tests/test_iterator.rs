@@ -23,14 +23,14 @@ use util::{DBPath, assert_iter, assert_iter_reversed, pair};
 fn test_iterator() {
 	let n = DBPath::new("_rust_rocksdb_iterator_test");
 	{
-		const K1:&[u8] = b"k1";
-		const K2:&[u8] = b"k2";
-		const K3:&[u8] = b"k3";
-		const K4:&[u8] = b"k4";
-		const V1:&[u8] = b"v1111";
-		const V2:&[u8] = b"v2222";
-		const V3:&[u8] = b"v3333";
-		const V4:&[u8] = b"v4444";
+		const K1: &[u8] = b"k1";
+		const K2: &[u8] = b"k2";
+		const K3: &[u8] = b"k3";
+		const K4: &[u8] = b"k4";
+		const V1: &[u8] = b"v1111";
+		const V2: &[u8] = b"v2222";
+		const V3: &[u8] = b"v3333";
+		const V4: &[u8] = b"v4444";
 
 		let db = DB::open_default(&n).unwrap();
 		assert!(db.put(K1, V1).is_ok());
@@ -105,10 +105,10 @@ fn test_iterator() {
 fn test_prefix_iterator() {
 	let n = DBPath::new("_rust_rocksdb_prefix_iterator_test");
 	{
-		const A1:&[u8] = b"aaa1";
-		const A2:&[u8] = b"aaa2";
-		const B1:&[u8] = b"bbb1";
-		const B2:&[u8] = b"bbb2";
+		const A1: &[u8] = b"aaa1";
+		const A2: &[u8] = b"aaa2";
+		const B1: &[u8] = b"bbb1";
+		const B2: &[u8] = b"bbb2";
 
 		let prefix_extractor = rocksdb::SliceTransform::create_fixed_prefix(3);
 
@@ -179,13 +179,13 @@ fn test_prefix_iterator_uses_full_prefix() {
 fn test_full_iterator() {
 	let path = DBPath::new("full_iterator_test");
 	{
-		const A1:&[u8] = b"aaa1";
-		const A2:&[u8] = b"aaa2";
-		const B1:&[u8] = b"bbb1";
-		const B2:&[u8] = b"bbb2";
+		const A1: &[u8] = b"aaa1";
+		const A2: &[u8] = b"aaa2";
+		const B1: &[u8] = b"bbb1";
+		const B2: &[u8] = b"bbb2";
 
 		let prefix_extractor = rocksdb::SliceTransform::create_fixed_prefix(3);
-		let factory = MemtableFactory::HashSkipList { bucket_count:1_000_000, height:4, branching_factor:4 };
+		let factory = MemtableFactory::HashSkipList { bucket_count: 1_000_000, height: 4, branching_factor: 4 };
 
 		let mut opts = Options::default();
 		opts.create_if_missing(true);
@@ -212,7 +212,7 @@ fn test_full_iterator() {
 	}
 }
 
-fn custom_iter(db:&'_ DB) -> impl Iterator<Item = usize> + '_ {
+fn custom_iter(db: &'_ DB) -> impl Iterator<Item = usize> + '_ {
 	db.iterator(IteratorMode::Start)
 		.map(Result::unwrap)
 		.map(|(_, db_value)| db_value.len())
@@ -259,7 +259,13 @@ fn test_iter_range() {
 		assert!(db.put(key, key).is_ok());
 	}
 
-	fn test(db:&DB, mode:IteratorMode, range:impl rocksdb::IterateBounds, want:std::ops::Range<usize>, reverse:bool) {
+	fn test(
+		db: &DB,
+		mode: IteratorMode,
+		range: impl rocksdb::IterateBounds,
+		want: std::ops::Range<usize>,
+		reverse: bool,
+	) {
 		let mut ro = rocksdb::ReadOptions::default();
 		// Set bounds to test that set_iterate_range clears old bounds.
 		ro.set_iterate_lower_bound(vec![b'z']);
@@ -277,13 +283,16 @@ fn test_iter_range() {
 		assert_eq!(&ALL_KEYS[want], got);
 	}
 
-	fn prefix(key:&[u8]) -> rocksdb::PrefixRange<&[u8]> { rocksdb::PrefixRange(key) }
+	fn prefix(key: &[u8]) -> rocksdb::PrefixRange<&[u8]> {
+		rocksdb::PrefixRange(key)
+	}
 
 	// Test Start and End modes
 	{
-		fn check<R>(db:&DB, range:R, want:std::ops::Range<usize>)
+		fn check<R>(db: &DB, range: R, want: std::ops::Range<usize>)
 		where
-			R: rocksdb::IterateBounds + Clone, {
+			R: rocksdb::IterateBounds + Clone,
+		{
 			test(db, IteratorMode::Start, range.clone(), want.clone(), false);
 			test(db, IteratorMode::End, range, want, true);
 		}
@@ -302,9 +311,10 @@ fn test_iter_range() {
 
 	// Test From mode with Forward direction
 	{
-		fn check<R>(db:&DB, from:&[u8], range:R, want:std::ops::Range<usize>)
+		fn check<R>(db: &DB, from: &[u8], range: R, want: std::ops::Range<usize>)
 		where
-			R: rocksdb::IterateBounds + Clone, {
+			R: rocksdb::IterateBounds + Clone,
+		{
 			let mode = IteratorMode::From(from, Direction::Forward);
 			test(db, mode, range, want, false);
 		}
@@ -329,9 +339,10 @@ fn test_iter_range() {
 
 	// Test From mode with Reverse direction
 	{
-		fn check<R>(db:&DB, from:&[u8], range:R, want:std::ops::Range<usize>)
+		fn check<R>(db: &DB, from: &[u8], range: R, want: std::ops::Range<usize>)
 		where
-			R: rocksdb::IterateBounds + Clone, {
+			R: rocksdb::IterateBounds + Clone,
+		{
 			let mode = IteratorMode::From(from, Direction::Reverse);
 			test(db, mode, range, want, true);
 		}

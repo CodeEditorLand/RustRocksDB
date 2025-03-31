@@ -15,15 +15,14 @@
 
 use std::{
 	ffi::{CStr, CString},
-	ptr,
-	str,
+	ptr, str,
 };
 
 use libc::*;
 
 use super::*;
 
-pub fn error_message(ptr:*const c_char) -> String {
+pub fn error_message(ptr: *const c_char) -> String {
 	let c_str = unsafe { CStr::from_ptr(ptr as *const _) };
 	let s = str::from_utf8(c_str.to_bytes()).unwrap().to_owned();
 	unsafe {
@@ -45,8 +44,8 @@ fn internal() {
 		let rustpath = std::env::temp_dir().join("_rust_rocksdb_internaltest");
 		let cpath = CString::new(rustpath.into_os_string().to_string_lossy().as_bytes()).unwrap();
 
-		let mut err:*mut c_char = ptr::null_mut();
-		let err_ptr:*mut *mut c_char = &mut err;
+		let mut err: *mut c_char = ptr::null_mut();
+		let err_ptr: *mut *mut c_char = &mut err;
 		let db = rocksdb_open(opts, cpath.as_ptr() as *const _, err_ptr);
 		if !err.is_null() {
 			println!("failed to open rocksdb: {}", error_message(err));
@@ -73,7 +72,7 @@ fn internal() {
 		let readopts = rocksdb_readoptions_create();
 		assert!(!readopts.is_null());
 
-		let mut val_len:size_t = 0;
+		let mut val_len: size_t = 0;
 		let val_len_ptr = &mut val_len as *mut size_t;
 		rocksdb_get(db, readopts.clone(), key.as_ptr() as *const c_char, 4, val_len_ptr, err_ptr);
 		rocksdb_readoptions_destroy(readopts);

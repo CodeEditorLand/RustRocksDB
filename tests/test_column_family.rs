@@ -22,18 +22,12 @@ use rocksdb::MultiThreaded;
 #[cfg(not(feature = "multi-threaded-cf"))]
 use rocksdb::SingleThreaded;
 use rocksdb::{
-	ColumnFamilyDescriptor,
-	DB,
-	DEFAULT_COLUMN_FAMILY_NAME,
-	MergeOperands,
-	Options,
-	TransactionDB,
-	TransactionDBOptions,
+	ColumnFamilyDescriptor, DB, DEFAULT_COLUMN_FAMILY_NAME, MergeOperands, Options, TransactionDB, TransactionDBOptions,
 };
 use util::DBPath;
 
-fn dir_size(path:impl AsRef<Path>) -> io::Result<u64> {
-	fn dir_size(mut dir:fs::ReadDir) -> io::Result<u64> {
+fn dir_size(path: impl AsRef<Path>) -> io::Result<u64> {
+	fn dir_size(mut dir: fs::ReadDir) -> io::Result<u64> {
 		dir.try_fold(0, |acc, file| {
 			let file = file?;
 			let size = match file.metadata()? {
@@ -310,11 +304,9 @@ fn test_merge_operator() {
 		println!("m is {m:?}");
 		// TODO assert!(m.is_ok());
 		match db.get(b"k1") {
-			Ok(Some(value)) => {
-				match std::str::from_utf8(&value) {
-					Ok(v) => println!("retrieved utf8 value: {v}"),
-					Err(_) => println!("did not read valid utf-8 out of the db"),
-				}
+			Ok(Some(value)) => match std::str::from_utf8(&value) {
+				Ok(v) => println!("retrieved utf8 value: {v}"),
+				Err(_) => println!("did not read valid utf-8 out of the db"),
 			},
 			Err(_) => println!("error reading value"),
 			_ => panic!("value not present!"),
@@ -327,9 +319,9 @@ fn test_merge_operator() {
 	}
 }
 
-fn test_provided_merge(_:&[u8], existing_val:Option<&[u8]>, operands:&MergeOperands) -> Option<Vec<u8>> {
+fn test_provided_merge(_: &[u8], existing_val: Option<&[u8]>, operands: &MergeOperands) -> Option<Vec<u8>> {
 	let nops = operands.len();
-	let mut result:Vec<u8> = Vec::with_capacity(nops);
+	let mut result: Vec<u8> = Vec::with_capacity(nops);
 	if let Some(v) = existing_val {
 		for e in v {
 			result.push(*e);

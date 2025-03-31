@@ -111,55 +111,21 @@ use librocksdb_sys as ffi;
 
 pub use crate::{
 	column_family::{
-		AsColumnFamilyRef,
-		BoundColumnFamily,
-		ColumnFamily,
-		ColumnFamilyDescriptor,
-		ColumnFamilyRef,
-		ColumnFamilyTtl,
+		AsColumnFamilyRef, BoundColumnFamily, ColumnFamily, ColumnFamilyDescriptor, ColumnFamilyRef, ColumnFamilyTtl,
 		DEFAULT_COLUMN_FAMILY_NAME,
 	},
 	compaction_filter::Decision as CompactionDecision,
 	db::{DB, DBAccess, DBCommon, DBWithThreadMode, LiveFile, MultiThreaded, SingleThreaded, ThreadMode},
 	db_iterator::{
-		DBIterator,
-		DBIteratorWithThreadMode,
-		DBRawIterator,
-		DBRawIteratorWithThreadMode,
-		DBWALIterator,
-		Direction,
+		DBIterator, DBIteratorWithThreadMode, DBRawIterator, DBRawIteratorWithThreadMode, DBWALIterator, Direction,
 		IteratorMode,
 	},
 	db_options::{
-		BlockBasedIndexType,
-		BlockBasedOptions,
-		BottommostLevelCompaction,
-		Cache,
-		ChecksumType,
-		CompactOptions,
-		CompactionPri,
-		CuckooTableOptions,
-		DBCompactionStyle,
-		DBCompressionType,
-		DBPath,
-		DBRecoveryMode,
-		DataBlockIndexType,
-		FifoCompactOptions,
-		FlushOptions,
-		IngestExternalFileOptions,
-		KeyEncodingType,
-		LogLevel,
-		LruCacheOptions,
-		MemtableFactory,
-		Options,
-		PlainTableFactoryOptions,
-		ReadOptions,
-		ReadTier,
-		UniversalCompactOptions,
-		UniversalCompactionStopStyle,
-		WaitForCompactOptions,
-		WriteBufferManager,
-		WriteOptions,
+		BlockBasedIndexType, BlockBasedOptions, BottommostLevelCompaction, Cache, ChecksumType, CompactOptions,
+		CompactionPri, CuckooTableOptions, DBCompactionStyle, DBCompressionType, DBPath, DBRecoveryMode,
+		DataBlockIndexType, FifoCompactOptions, FlushOptions, IngestExternalFileOptions, KeyEncodingType, LogLevel,
+		LruCacheOptions, MemtableFactory, Options, PlainTableFactoryOptions, ReadOptions, ReadTier,
+		UniversalCompactOptions, UniversalCompactionStopStyle, WaitForCompactOptions, WriteBufferManager, WriteOptions,
 	},
 	db_pinnable_slice::DBPinnableSlice,
 	env::Env,
@@ -171,11 +137,7 @@ pub use crate::{
 	snapshot::{Snapshot, SnapshotWithThreadMode},
 	sst_file_writer::SstFileWriter,
 	transactions::{
-		OptimisticTransactionDB,
-		OptimisticTransactionOptions,
-		Transaction,
-		TransactionDB,
-		TransactionDBOptions,
+		OptimisticTransactionDB, OptimisticTransactionOptions, Transaction, TransactionDB, TransactionDBOptions,
 		TransactionOptions,
 	},
 	write_batch::{WriteBatch, WriteBatchIterator, WriteBatchWithTransaction},
@@ -206,13 +168,17 @@ pub enum ErrorKind {
 /// ffi calls.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Error {
-	message:String,
+	message: String,
 }
 
 impl Error {
-	fn new(message:String) -> Error { Error { message } }
+	fn new(message: String) -> Error {
+		Error { message }
+	}
 
-	pub fn into_string(self) -> String { self.into() }
+	pub fn into_string(self) -> String {
+		self.into()
+	}
 
 	/// Parse corresponding [`ErrorKind`] from error message.
 	pub fn kind(&self) -> ErrorKind {
@@ -238,51 +204,41 @@ impl Error {
 }
 
 impl AsRef<str> for Error {
-	fn as_ref(&self) -> &str { &self.message }
+	fn as_ref(&self) -> &str {
+		&self.message
+	}
 }
 
 impl From<Error> for String {
-	fn from(e:Error) -> String { e.message }
+	fn from(e: Error) -> String {
+		e.message
+	}
 }
 
 impl error::Error for Error {
-	fn description(&self) -> &str { &self.message }
+	fn description(&self) -> &str {
+		&self.message
+	}
 }
 
 impl fmt::Display for Error {
-	fn fmt(&self, formatter:&mut fmt::Formatter) -> Result<(), fmt::Error> { self.message.fmt(formatter) }
+	fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		self.message.fmt(formatter)
+	}
 }
 
 #[cfg(test)]
 mod test {
 	use super::{
-		BlockBasedOptions,
-		BoundColumnFamily,
-		Cache,
-		ColumnFamily,
-		ColumnFamilyDescriptor,
-		DB,
-		DBIterator,
-		DBRawIterator,
-		IngestExternalFileOptions,
-		Options,
-		PlainTableFactoryOptions,
-		ReadOptions,
-		Snapshot,
-		SstFileWriter,
-		WriteBatch,
-		WriteBufferManager,
-		WriteOptions,
+		BlockBasedOptions, BoundColumnFamily, Cache, ColumnFamily, ColumnFamilyDescriptor, DB, DBIterator,
+		DBRawIterator, IngestExternalFileOptions, Options, PlainTableFactoryOptions, ReadOptions, Snapshot,
+		SstFileWriter, WriteBatch, WriteBufferManager, WriteOptions,
 		column_family::UnboundColumnFamily,
 		db_options::{CacheWrapper, WriteBufferManagerWrapper},
 		env::{Env, EnvWrapper},
 	};
 	use crate::{
-		OptimisticTransactionDB,
-		OptimisticTransactionOptions,
-		Transaction,
-		TransactionDB,
-		TransactionDBOptions,
+		OptimisticTransactionDB, OptimisticTransactionOptions, Transaction, TransactionDB, TransactionDBOptions,
 		TransactionOptions,
 	};
 
@@ -292,7 +248,7 @@ mod test {
 		// either directly for pointer-wrapping types or transitively for types with
 		// all Send fields
 
-		fn is_send<T:Send>() {
+		fn is_send<T: Send>() {
 			// dummy function just used for its parameterized type bound
 		}
 
@@ -330,7 +286,7 @@ mod test {
 	fn is_sync() {
 		// test (at compile time) that certain types implement the auto-trait Sync
 
-		fn is_sync<T:Sync>() {
+		fn is_sync<T: Sync>() {
 			// dummy function just used for its parameterized type bound
 		}
 

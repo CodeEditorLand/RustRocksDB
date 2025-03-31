@@ -21,21 +21,23 @@ pub trait CompactionFilterFactory {
 	type Filter: CompactionFilter;
 
 	/// Returns a CompactionFilter for the compaction process
-	fn create(&mut self, context:CompactionFilterContext) -> Self::Filter;
+	fn create(&mut self, context: CompactionFilterContext) -> Self::Filter;
 
 	/// Returns a name that identifies this compaction filter factory.
 	fn name(&self) -> &CStr;
 }
 
-pub unsafe extern "C" fn destructor_callback<F>(raw_self:*mut c_void)
+pub unsafe extern fn destructor_callback<F>(raw_self: *mut c_void)
 where
-	F: CompactionFilterFactory, {
+	F: CompactionFilterFactory,
+{
 	drop(unsafe { Box::from_raw(raw_self as *mut F) });
 }
 
-pub unsafe extern "C" fn name_callback<F>(raw_self:*mut c_void) -> *const c_char
+pub unsafe extern fn name_callback<F>(raw_self: *mut c_void) -> *const c_char
 where
-	F: CompactionFilterFactory, {
+	F: CompactionFilterFactory,
+{
 	let self_ = unsafe { &*(raw_self.cast_const() as *const F) };
 	self_.name().as_ptr()
 }
@@ -43,14 +45,14 @@ where
 /// Context information of a compaction run
 pub struct CompactionFilterContext {
 	/// Does this compaction run include all data files
-	pub is_full_compaction:bool,
+	pub is_full_compaction: bool,
 	/// Is this compaction requested by the client (true),
 	/// or is it occurring as an automatic compaction process
-	pub is_manual_compaction:bool,
+	pub is_manual_compaction: bool,
 }
 
 impl CompactionFilterContext {
-	unsafe fn from_raw(ptr:*mut ffi::rocksdb_compactionfiltercontext_t) -> Self {
+	unsafe fn from_raw(ptr: *mut ffi::rocksdb_compactionfiltercontext_t) -> Self {
 		let is_full_compaction = unsafe { ffi::rocksdb_compactionfiltercontext_is_full_compaction(ptr) } != 0;
 		let is_manual_compaction = unsafe { ffi::rocksdb_compactionfiltercontext_is_manual_compaction(ptr) } != 0;
 
@@ -58,12 +60,13 @@ impl CompactionFilterContext {
 	}
 }
 
-pub unsafe extern "C" fn create_compaction_filter_callback<F>(
-	raw_self:*mut c_void,
-	context:*mut ffi::rocksdb_compactionfiltercontext_t,
+pub unsafe extern fn create_compaction_filter_callback<F>(
+	raw_self: *mut c_void,
+	context: *mut ffi::rocksdb_compactionfiltercontext_t,
 ) -> *mut ffi::rocksdb_compactionfilter_t
 where
-	F: CompactionFilterFactory, {
+	F: CompactionFilterFactory,
+{
 	let self_ = unsafe { &mut *(raw_self as *mut F) };
 	let context = unsafe { CompactionFilterContext::from_raw(context) };
 	let filter = Box::new(self_.create(context));
@@ -89,23 +92,27 @@ mod tests {
 
 	struct CountFilter(u16, CString);
 	impl CompactionFilter for CountFilter {
-		fn filter(&mut self, _level:u32, _key:&[u8], _value:&[u8]) -> crate::CompactionDecision {
+		fn filter(&mut self, _level: u32, _key: &[u8], _value: &[u8]) -> crate::CompactionDecision {
 			self.0 += 1;
 			if self.0 > 2 { Decision::Remove } else { Decision::Keep }
 		}
 
-		fn name(&self) -> &CStr { &self.1 }
+		fn name(&self) -> &CStr {
+			&self.1
+		}
 	}
 
 	struct TestFactory(CString);
 	impl CompactionFilterFactory for TestFactory {
 		type Filter = CountFilter;
 
-		fn create(&mut self, _context:CompactionFilterContext) -> Self::Filter {
+		fn create(&mut self, _context: CompactionFilterContext) -> Self::Filter {
 			CountFilter(0, CString::new("CountFilter").unwrap())
 		}
 
-		fn name(&self) -> &CStr { &self.0 }
+		fn name(&self) -> &CStr {
+			&self.0
+		}
 	}
 
 	#[test]

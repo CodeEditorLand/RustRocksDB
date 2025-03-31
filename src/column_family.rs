@@ -20,46 +20,54 @@ use crate::{Options, db::MultiThreaded, ffi};
 ///
 /// The column family with this name is created implicitly whenever column
 /// families are used.
-pub const DEFAULT_COLUMN_FAMILY_NAME:&str = "default";
+pub const DEFAULT_COLUMN_FAMILY_NAME: &str = "default";
 
 /// A descriptor for a RocksDB column family.
 ///
 /// A description of the column family, containing the name and `Options`.
 pub struct ColumnFamilyDescriptor {
-	pub(crate) name:String,
-	pub(crate) options:Options,
-	pub(crate) ttl:ColumnFamilyTtl,
+	pub(crate) name: String,
+	pub(crate) options: Options,
+	pub(crate) ttl: ColumnFamilyTtl,
 }
 
 impl ColumnFamilyDescriptor {
 	/// Create a new column family descriptor with the specified name and
 	/// options. *WARNING*:
 	/// Will use [`ColumnFamilyTtl::SameAsDb`] as ttl.
-	pub fn new<S>(name:S, options:Options) -> Self
+	pub fn new<S>(name: S, options: Options) -> Self
 	where
-		S: Into<String>, {
-		Self { name:name.into(), options, ttl:ColumnFamilyTtl::SameAsDb }
+		S: Into<String>,
+	{
+		Self { name: name.into(), options, ttl: ColumnFamilyTtl::SameAsDb }
 	}
 
 	/// Create a new column family descriptor with the specified name, options,
 	/// and ttl. *WARNING*:
 	/// The ttl is applied only when DB is opened with
 	/// [`crate::db::DB::open_with_ttl()`].
-	pub fn new_with_ttl<S>(name:S, options:Options, ttl:ColumnFamilyTtl) -> Self
+	pub fn new_with_ttl<S>(name: S, options: Options, ttl: ColumnFamilyTtl) -> Self
 	where
-		S: Into<String>, {
-		Self { name:name.into(), options, ttl }
+		S: Into<String>,
+	{
+		Self { name: name.into(), options, ttl }
 	}
 
 	/// Sets ttl for the column family. It's applied only when DB is opened with
 	/// [`crate::db::DB::open_with_ttl()`]. Changing ttl after DB is opened has
 	/// no effect.
-	pub fn set_ttl(&mut self, ttl:ColumnFamilyTtl) { self.ttl = ttl; }
+	pub fn set_ttl(&mut self, ttl: ColumnFamilyTtl) {
+		self.ttl = ttl;
+	}
 
 	/// Get the name of the ColumnFamilyDescriptor.
-	pub fn name(&self) -> &str { &self.name }
+	pub fn name(&self) -> &str {
+		&self.name
+	}
 
-	pub fn ttl(&self) -> ColumnFamilyTtl { self.ttl }
+	pub fn ttl(&self) -> ColumnFamilyTtl {
+		self.ttl
+	}
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -78,7 +86,7 @@ pub enum ColumnFamilyTtl {
 /// An opaque type used to represent a column family. Returned from some
 /// functions, and used in others
 pub struct ColumnFamily {
-	pub(crate) inner:*mut ffi::rocksdb_column_family_handle_t,
+	pub(crate) inner: *mut ffi::rocksdb_column_family_handle_t,
 }
 
 /// A specialized opaque type used to represent a column family by the
@@ -88,8 +96,8 @@ pub struct ColumnFamily {
 /// of it, this is as cheap and small as `&ColumnFamily` because this only has a
 /// single pointer-wide field.
 pub struct BoundColumnFamily<'a> {
-	pub(crate) inner:*mut ffi::rocksdb_column_family_handle_t,
-	pub(crate) multi_threaded_cfs:std::marker::PhantomData<&'a MultiThreaded>,
+	pub(crate) inner: *mut ffi::rocksdb_column_family_handle_t,
+	pub(crate) multi_threaded_cfs: std::marker::PhantomData<&'a MultiThreaded>,
 }
 
 // internal struct which isn't exposed to public api.
@@ -97,7 +105,7 @@ pub struct BoundColumnFamily<'a> {
 // ColumnFamily's lifetime should be bound to DB. But, db holds cfs and cfs
 // can't easily self-reference DB as its lifetime due to rust's type system
 pub(crate) struct UnboundColumnFamily {
-	pub(crate) inner:*mut ffi::rocksdb_column_family_handle_t,
+	pub(crate) inner: *mut ffi::rocksdb_column_family_handle_t,
 }
 
 impl UnboundColumnFamily {
@@ -108,7 +116,7 @@ impl UnboundColumnFamily {
 	}
 }
 
-fn destroy_handle(handle:*mut ffi::rocksdb_column_family_handle_t) {
+fn destroy_handle(handle: *mut ffi::rocksdb_column_family_handle_t) {
 	// SAFETY: This should be called only from various Drop::drop(), strictly
 	// keeping a 1-to-1 ownership to avoid double invocation to the rocksdb
 	// function with same handle.
@@ -118,17 +126,23 @@ fn destroy_handle(handle:*mut ffi::rocksdb_column_family_handle_t) {
 }
 
 impl Drop for ColumnFamily {
-	fn drop(&mut self) { destroy_handle(self.inner); }
+	fn drop(&mut self) {
+		destroy_handle(self.inner);
+	}
 }
 
 // these behaviors must be identical between BoundColumnFamily and
 // UnboundColumnFamily due to the unsafe transmute() in bound_column_family()!
 impl Drop for BoundColumnFamily<'_> {
-	fn drop(&mut self) { destroy_handle(self.inner); }
+	fn drop(&mut self) {
+		destroy_handle(self.inner);
+	}
 }
 
 impl Drop for UnboundColumnFamily {
-	fn drop(&mut self) { destroy_handle(self.inner); }
+	fn drop(&mut self) {
+		destroy_handle(self.inner);
+	}
 }
 
 /// Handy type alias to hide actual type difference to reference
@@ -146,11 +160,15 @@ pub trait AsColumnFamilyRef {
 }
 
 impl AsColumnFamilyRef for ColumnFamily {
-	fn inner(&self) -> *mut ffi::rocksdb_column_family_handle_t { self.inner }
+	fn inner(&self) -> *mut ffi::rocksdb_column_family_handle_t {
+		self.inner
+	}
 }
 
 impl AsColumnFamilyRef for &'_ ColumnFamily {
-	fn inner(&self) -> *mut ffi::rocksdb_column_family_handle_t { self.inner }
+	fn inner(&self) -> *mut ffi::rocksdb_column_family_handle_t {
+		self.inner
+	}
 }
 
 // Only implement for Arc-ed BoundColumnFamily as this tightly coupled and
@@ -159,7 +177,9 @@ impl AsColumnFamilyRef for &'_ ColumnFamily {
 // Also, ColumnFamilyRef might not be Arc<BoundColumnFamily<'a>> depending crate
 // feature flags so, we can't use the type alias here.
 impl AsColumnFamilyRef for Arc<BoundColumnFamily<'_>> {
-	fn inner(&self) -> *mut ffi::rocksdb_column_family_handle_t { self.inner }
+	fn inner(&self) -> *mut ffi::rocksdb_column_family_handle_t {
+		self.inner
+	}
 }
 
 unsafe impl Send for ColumnFamily {}

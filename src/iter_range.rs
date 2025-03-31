@@ -12,19 +12,27 @@ pub trait IterateBounds {
 }
 
 impl IterateBounds for std::ops::RangeFull {
-	fn into_bounds(self) -> (Option<Vec<u8>>, Option<Vec<u8>>) { (None, None) }
+	fn into_bounds(self) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
+		(None, None)
+	}
 }
 
-impl<K:Into<Vec<u8>>> IterateBounds for std::ops::Range<K> {
-	fn into_bounds(self) -> (Option<Vec<u8>>, Option<Vec<u8>>) { (Some(self.start.into()), Some(self.end.into())) }
+impl<K: Into<Vec<u8>>> IterateBounds for std::ops::Range<K> {
+	fn into_bounds(self) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
+		(Some(self.start.into()), Some(self.end.into()))
+	}
 }
 
-impl<K:Into<Vec<u8>>> IterateBounds for std::ops::RangeFrom<K> {
-	fn into_bounds(self) -> (Option<Vec<u8>>, Option<Vec<u8>>) { (Some(self.start.into()), None) }
+impl<K: Into<Vec<u8>>> IterateBounds for std::ops::RangeFrom<K> {
+	fn into_bounds(self) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
+		(Some(self.start.into()), None)
+	}
 }
 
-impl<K:Into<Vec<u8>>> IterateBounds for std::ops::RangeTo<K> {
-	fn into_bounds(self) -> (Option<Vec<u8>>, Option<Vec<u8>>) { (None, Some(self.end.into())) }
+impl<K: Into<Vec<u8>>> IterateBounds for std::ops::RangeTo<K> {
+	fn into_bounds(self) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
+		(None, Some(self.end.into()))
+	}
 }
 
 /// Representation of a range of keys starting with given prefix.
@@ -34,7 +42,7 @@ impl<K:Into<Vec<u8>>> IterateBounds for std::ops::RangeTo<K> {
 #[derive(Clone, Copy)]
 pub struct PrefixRange<K>(pub K);
 
-impl<K:Into<Vec<u8>>> IterateBounds for PrefixRange<K> {
+impl<K: Into<Vec<u8>>> IterateBounds for PrefixRange<K> {
 	/// Converts the prefix range representation into pair of bounds.
 	///
 	/// The conversion assumes lexicographical sorting on `u8` values.  For
@@ -65,7 +73,7 @@ impl<K:Into<Vec<u8>>> IterateBounds for PrefixRange<K> {
 /// Returns `None` if there is no value which can follow value with given
 /// prefix.  This happens when prefix consists entirely of `'\xff'` bytes (or is
 /// empty).
-fn next_prefix(prefix:&[u8]) -> Option<Vec<u8>> {
+fn next_prefix(prefix: &[u8]) -> Option<Vec<u8>> {
 	let ffs = prefix.iter().rev().take_while(|&&byte| byte == u8::MAX).count();
 	let next = &prefix[..(prefix.len() - ffs)];
 	if next.is_empty() {
@@ -81,12 +89,12 @@ fn next_prefix(prefix:&[u8]) -> Option<Vec<u8>> {
 
 #[test]
 fn test_prefix_range() {
-	fn test(start:&[u8], end:Option<&[u8]>) {
+	fn test(start: &[u8], end: Option<&[u8]>) {
 		let got = PrefixRange(start).into_bounds();
 		assert_eq!((Some(start), end), (got.0.as_deref(), got.1.as_deref()));
 	}
 
-	let empty:&[u8] = &[];
+	let empty: &[u8] = &[];
 	assert_eq!((None, None), PrefixRange(empty).into_bounds());
 	test(b"\xff", None);
 	test(b"\xff\xff\xff\xff", None);

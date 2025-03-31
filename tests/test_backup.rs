@@ -16,8 +16,7 @@ mod util;
 
 use pretty_assertions::assert_eq;
 use rocksdb::{
-	DB,
-	Env,
+	DB, Env,
 	backup::{BackupEngine, BackupEngineOptions, RestoreOptions},
 };
 use util::DBPath;
@@ -101,7 +100,9 @@ fn restore_from_backup() {
 	}
 }
 
-fn assert_send_generic<T:Send>() {}
+fn assert_send_generic<T: Send>() {}
 
 #[test]
-fn assert_send() { assert_send_generic::<BackupEngine>(); }
+fn assert_send() {
+	assert_send_generic::<BackupEngine>();
+}

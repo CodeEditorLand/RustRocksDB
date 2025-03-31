@@ -3,7 +3,9 @@ use crate::ffi;
 #[derive(Debug, Clone)]
 pub struct NameParseError;
 impl core::fmt::Display for NameParseError {
-	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "unrecognized name") }
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "unrecognized name")
+	}
 }
 
 impl std::error::Error for NameParseError {}
@@ -100,29 +102,49 @@ include!("statistics_enum_ticker.rs");
 include!("statistics_enum_histogram.rs");
 
 pub struct HistogramData {
-	pub(crate) inner:*mut ffi::rocksdb_statistics_histogram_data_t,
+	pub(crate) inner: *mut ffi::rocksdb_statistics_histogram_data_t,
 }
 
 impl HistogramData {
-	pub fn new() -> HistogramData { HistogramData::default() }
+	pub fn new() -> HistogramData {
+		HistogramData::default()
+	}
 
-	pub fn median(&self) -> f64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_median(self.inner) } }
+	pub fn median(&self) -> f64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_median(self.inner) }
+	}
 
-	pub fn average(&self) -> f64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_average(self.inner) } }
+	pub fn average(&self) -> f64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_average(self.inner) }
+	}
 
-	pub fn p95(&self) -> f64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_p95(self.inner) } }
+	pub fn p95(&self) -> f64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_p95(self.inner) }
+	}
 
-	pub fn p99(&self) -> f64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_p99(self.inner) } }
+	pub fn p99(&self) -> f64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_p99(self.inner) }
+	}
 
-	pub fn max(&self) -> f64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_max(self.inner) } }
+	pub fn max(&self) -> f64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_max(self.inner) }
+	}
 
-	pub fn min(&self) -> f64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_min(self.inner) } }
+	pub fn min(&self) -> f64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_min(self.inner) }
+	}
 
-	pub fn sum(&self) -> u64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_sum(self.inner) } }
+	pub fn sum(&self) -> u64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_sum(self.inner) }
+	}
 
-	pub fn count(&self) -> u64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_count(self.inner) } }
+	pub fn count(&self) -> u64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_count(self.inner) }
+	}
 
-	pub fn std_dev(&self) -> f64 { unsafe { ffi::rocksdb_statistics_histogram_data_get_std_dev(self.inner) } }
+	pub fn std_dev(&self) -> f64 {
+		unsafe { ffi::rocksdb_statistics_histogram_data_get_std_dev(self.inner) }
+	}
 }
 
 impl Default for HistogramData {
@@ -130,7 +152,7 @@ impl Default for HistogramData {
 		let histogram_data_inner = unsafe { ffi::rocksdb_statistics_histogram_data_create() };
 		assert!(!histogram_data_inner.is_null(), "Could not create RocksDB histogram data");
 
-		Self { inner:histogram_data_inner }
+		Self { inner: histogram_data_inner }
 	}
 }
 

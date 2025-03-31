@@ -61,7 +61,7 @@ pub trait CompactionFilter {
 	/// be used by a single thread that is doing the compaction run, and this
 	/// call does not need to be thread-safe.  However, multiple filters may be
 	/// in existence and operating concurrently.
-	fn filter(&mut self, level:u32, key:&[u8], value:&[u8]) -> Decision;
+	fn filter(&mut self, level: u32, key: &[u8], value: &[u8]) -> Decision;
 
 	/// Returns a name that identifies this compaction filter.
 	/// The name will be printed to LOG file on start up for diagnosis.
@@ -83,46 +83,54 @@ impl<F> CompactionFilterFn for F where F: FnMut(u32, &[u8], &[u8]) -> Decision +
 
 pub struct CompactionFilterCallback<F>
 where
-	F: CompactionFilterFn, {
-	pub name:CString,
-	pub filter_fn:F,
+	F: CompactionFilterFn,
+{
+	pub name: CString,
+	pub filter_fn: F,
 }
 
 impl<F> CompactionFilter for CompactionFilterCallback<F>
 where
 	F: CompactionFilterFn,
 {
-	fn name(&self) -> &CStr { self.name.as_c_str() }
+	fn name(&self) -> &CStr {
+		self.name.as_c_str()
+	}
 
-	fn filter(&mut self, level:u32, key:&[u8], value:&[u8]) -> Decision { (self.filter_fn)(level, key, value) }
+	fn filter(&mut self, level: u32, key: &[u8], value: &[u8]) -> Decision {
+		(self.filter_fn)(level, key, value)
+	}
 }
 
-pub unsafe extern "C" fn destructor_callback<F>(raw_cb:*mut c_void)
+pub unsafe extern fn destructor_callback<F>(raw_cb: *mut c_void)
 where
-	F: CompactionFilter, {
+	F: CompactionFilter,
+{
 	drop(unsafe { Box::from_raw(raw_cb as *mut F) });
 }
 
-pub unsafe extern "C" fn name_callback<F>(raw_cb:*mut c_void) -> *const c_char
+pub unsafe extern fn name_callback<F>(raw_cb: *mut c_void) -> *const c_char
 where
-	F: CompactionFilter, {
+	F: CompactionFilter,
+{
 	let cb = unsafe { &*(raw_cb as *mut F) };
 	cb.name().as_ptr()
 }
 
-pub unsafe extern "C" fn filter_callback<F>(
-	raw_cb:*mut c_void,
-	level:c_int,
-	raw_key:*const c_char,
-	key_length:size_t,
-	existing_value:*const c_char,
-	value_length:size_t,
-	new_value:*mut *mut c_char,
-	new_value_length:*mut size_t,
-	value_changed:*mut c_uchar,
+pub unsafe extern fn filter_callback<F>(
+	raw_cb: *mut c_void,
+	level: c_int,
+	raw_key: *const c_char,
+	key_length: size_t,
+	existing_value: *const c_char,
+	value_length: size_t,
+	new_value: *mut *mut c_char,
+	new_value_length: *mut size_t,
+	value_changed: *mut c_uchar,
 ) -> c_uchar
 where
-	F: CompactionFilter, {
+	F: CompactionFilter,
+{
 	use self::Decision::{Change, Keep, Remove};
 
 	let cb = unsafe { &mut *(raw_cb as *mut F) };
@@ -143,7 +151,7 @@ where
 
 #[cfg(test)]
 #[allow(unused_variables)]
-fn test_filter(level:u32, key:&[u8], value:&[u8]) -> Decision {
+fn test_filter(level: u32, key: &[u8], value: &[u8]) -> Decision {
 	use self::Decision::{Change, Keep, Remove};
 	match key.first() {
 		Some(&b'_') => Remove,

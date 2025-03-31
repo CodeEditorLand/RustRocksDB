@@ -16,7 +16,7 @@ impl PropName {
 	///
 	/// Panics if the `value` isn’t terminated by a nul byte or contains
 	/// interior nul bytes.
-	pub(crate) const fn new_unwrap(value:&str) -> &Self {
+	pub(crate) const fn new_unwrap(value: &str) -> &Self {
 		let Some((&0, bytes)) = value.as_bytes().split_last() else {
 			panic!("input was not nul-terminated");
 		};
@@ -37,7 +37,9 @@ impl PropName {
 
 	/// Converts the value into a C string slice.
 	#[inline]
-	pub fn as_c_str(&self) -> &CStr { &self.0 }
+	pub fn as_c_str(&self) -> &CStr {
+		&self.0
+	}
 
 	/// Converts the value into a string slice.
 	///
@@ -54,57 +56,79 @@ impl core::ops::Deref for PropName {
 	type Target = CStr;
 
 	#[inline]
-	fn deref(&self) -> &Self::Target { self.as_c_str() }
+	fn deref(&self) -> &Self::Target {
+		self.as_c_str()
+	}
 }
 
 impl core::convert::AsRef<CStr> for PropName {
 	#[inline]
-	fn as_ref(&self) -> &CStr { self.as_c_str() }
+	fn as_ref(&self) -> &CStr {
+		self.as_c_str()
+	}
 }
 
 impl core::convert::AsRef<str> for PropName {
 	#[inline]
-	fn as_ref(&self) -> &str { self.as_str() }
+	fn as_ref(&self) -> &str {
+		self.as_str()
+	}
 }
 
 impl std::borrow::ToOwned for PropName {
 	type Owned = PropertyName;
 
 	#[inline]
-	fn to_owned(&self) -> Self::Owned { PropertyName(self.0.to_owned()) }
+	fn to_owned(&self) -> Self::Owned {
+		PropertyName(self.0.to_owned())
+	}
 
 	#[inline]
-	fn clone_into(&self, target:&mut Self::Owned) { self.0.clone_into(&mut target.0); }
+	fn clone_into(&self, target: &mut Self::Owned) {
+		self.0.clone_into(&mut target.0);
+	}
 }
 
 impl core::fmt::Display for PropName {
 	#[inline]
-	fn fmt(&self, fmtr:&mut core::fmt::Formatter<'_>) -> core::fmt::Result { self.as_str().fmt(fmtr) }
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		self.as_str().fmt(fmtr)
+	}
 }
 
 impl core::fmt::Debug for PropName {
 	#[inline]
-	fn fmt(&self, fmtr:&mut core::fmt::Formatter<'_>) -> core::fmt::Result { self.as_str().fmt(fmtr) }
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		self.as_str().fmt(fmtr)
+	}
 }
 
 impl core::cmp::PartialEq<CStr> for PropName {
 	#[inline]
-	fn eq(&self, other:&CStr) -> bool { self.as_c_str().eq(other) }
+	fn eq(&self, other: &CStr) -> bool {
+		self.as_c_str().eq(other)
+	}
 }
 
 impl core::cmp::PartialEq<str> for PropName {
 	#[inline]
-	fn eq(&self, other:&str) -> bool { self.as_str().eq(other) }
+	fn eq(&self, other: &str) -> bool {
+		self.as_str().eq(other)
+	}
 }
 
 impl core::cmp::PartialEq<PropName> for CStr {
 	#[inline]
-	fn eq(&self, other:&PropName) -> bool { self.eq(other.as_c_str()) }
+	fn eq(&self, other: &PropName) -> bool {
+		self.eq(other.as_c_str())
+	}
 }
 
 impl core::cmp::PartialEq<PropName> for str {
 	#[inline]
-	fn eq(&self, other:&PropName) -> bool { self.eq(other.as_str()) }
+	fn eq(&self, other: &PropName) -> bool {
+		self.eq(other.as_str())
+	}
 }
 
 impl<'a> CStrLike for &'a PropName {
@@ -112,10 +136,14 @@ impl<'a> CStrLike for &'a PropName {
 	type Error = std::convert::Infallible;
 
 	#[inline]
-	fn bake(self) -> Result<Self::Baked, Self::Error> { Ok(&self.0) }
+	fn bake(self) -> Result<Self::Baked, Self::Error> {
+		Ok(&self.0)
+	}
 
 	#[inline]
-	fn into_c_string(self) -> Result<CString, Self::Error> { Ok(self.0.to_owned()) }
+	fn into_c_string(self) -> Result<CString, Self::Error> {
+		Ok(self.0.to_owned())
+	}
 }
 
 /// An owned name of a RocksDB property.
@@ -130,14 +158,16 @@ impl PropertyName {
 	/// Creates a new object from valid nul-terminated UTF-8 string. The string
 	/// must not contain interior nul bytes.
 	#[inline]
-	unsafe fn from_vec_with_nul_unchecked(inner:Vec<u8>) -> Self {
+	unsafe fn from_vec_with_nul_unchecked(inner: Vec<u8>) -> Self {
 		// SAFETY: Caller promises inner is nul-terminated and valid UTF-8.
 		Self(unsafe { CString::from_vec_with_nul_unchecked(inner) })
 	}
 
 	/// Converts the value into a C string.
 	#[inline]
-	pub fn into_c_string(self) -> CString { self.0 }
+	pub fn into_c_string(self) -> CString {
+		self.0
+	}
 
 	/// Converts the property name into a string.
 	///
@@ -164,47 +194,65 @@ impl std::ops::Deref for PropertyName {
 
 impl core::convert::AsRef<CStr> for PropertyName {
 	#[inline]
-	fn as_ref(&self) -> &CStr { self.as_c_str() }
+	fn as_ref(&self) -> &CStr {
+		self.as_c_str()
+	}
 }
 
 impl core::convert::AsRef<str> for PropertyName {
 	#[inline]
-	fn as_ref(&self) -> &str { self.as_str() }
+	fn as_ref(&self) -> &str {
+		self.as_str()
+	}
 }
 
 impl std::borrow::Borrow<PropName> for PropertyName {
 	#[inline]
-	fn borrow(&self) -> &PropName { self }
+	fn borrow(&self) -> &PropName {
+		self
+	}
 }
 
 impl core::fmt::Display for PropertyName {
 	#[inline]
-	fn fmt(&self, fmtr:&mut core::fmt::Formatter<'_>) -> core::fmt::Result { self.as_str().fmt(fmtr) }
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		self.as_str().fmt(fmtr)
+	}
 }
 
 impl core::fmt::Debug for PropertyName {
 	#[inline]
-	fn fmt(&self, fmtr:&mut core::fmt::Formatter<'_>) -> core::fmt::Result { self.as_str().fmt(fmtr) }
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		self.as_str().fmt(fmtr)
+	}
 }
 
 impl core::cmp::PartialEq<CString> for PropertyName {
 	#[inline]
-	fn eq(&self, other:&CString) -> bool { self.as_c_str().eq(other.as_c_str()) }
+	fn eq(&self, other: &CString) -> bool {
+		self.as_c_str().eq(other.as_c_str())
+	}
 }
 
 impl core::cmp::PartialEq<String> for PropertyName {
 	#[inline]
-	fn eq(&self, other:&String) -> bool { self.as_str().eq(other.as_str()) }
+	fn eq(&self, other: &String) -> bool {
+		self.as_str().eq(other.as_str())
+	}
 }
 
 impl core::cmp::PartialEq<PropertyName> for CString {
 	#[inline]
-	fn eq(&self, other:&PropertyName) -> bool { self.as_c_str().eq(other.as_c_str()) }
+	fn eq(&self, other: &PropertyName) -> bool {
+		self.as_c_str().eq(other.as_c_str())
+	}
 }
 
 impl core::cmp::PartialEq<PropertyName> for String {
 	#[inline]
-	fn eq(&self, other:&PropertyName) -> bool { self.as_str().eq(other.as_str()) }
+	fn eq(&self, other: &PropertyName) -> bool {
+		self.as_str().eq(other.as_str())
+	}
 }
 
 impl CStrLike for PropertyName {
@@ -212,10 +260,14 @@ impl CStrLike for PropertyName {
 	type Error = std::convert::Infallible;
 
 	#[inline]
-	fn bake(self) -> Result<Self::Baked, Self::Error> { Ok(self.0) }
+	fn bake(self) -> Result<Self::Baked, Self::Error> {
+		Ok(self.0)
+	}
 
 	#[inline]
-	fn into_c_string(self) -> Result<CString, Self::Error> { Ok(self.0) }
+	fn into_c_string(self) -> Result<CString, Self::Error> {
+		Ok(self.0)
+	}
 }
 
 impl<'a> CStrLike for &'a PropertyName {
@@ -223,10 +275,14 @@ impl<'a> CStrLike for &'a PropertyName {
 	type Error = std::convert::Infallible;
 
 	#[inline]
-	fn bake(self) -> Result<Self::Baked, Self::Error> { Ok(self.as_c_str()) }
+	fn bake(self) -> Result<Self::Baked, Self::Error> {
+		Ok(self.as_c_str())
+	}
 
 	#[inline]
-	fn into_c_string(self) -> Result<CString, Self::Error> { Ok(self.0.clone()) }
+	fn into_c_string(self) -> Result<CString, Self::Error> {
+		Ok(self.0.clone())
+	}
 }
 
 /// Constructs a property name for an ‘at level’ property.
@@ -236,7 +292,7 @@ impl<'a> CStrLike for &'a PropertyName {
 /// `"rocksdb.<name><level>"`.
 ///
 /// Expects `name` not to contain any interior nul bytes.
-pub(crate) unsafe fn level_property(name:&str, level:usize) -> PropertyName {
+pub(crate) unsafe fn level_property(name: &str, level: usize) -> PropertyName {
 	let bytes = format!("rocksdb.{name}{level}\0").into_bytes();
 	// SAFETY: We’re appending terminating nul and caller promises `name` has no
 	// interior nul bytes.
@@ -254,8 +310,12 @@ fn sanity_checks() {
 
 #[test]
 #[should_panic(expected = "input contained interior nul byte")]
-fn test_interior_nul() { PropName::new_unwrap("interior nul\0\0"); }
+fn test_interior_nul() {
+	PropName::new_unwrap("interior nul\0\0");
+}
 
 #[test]
 #[should_panic(expected = "input was not nul-terminated")]
-fn test_non_nul_terminated() { PropName::new_unwrap("no nul terminator"); }
+fn test_non_nul_terminated() {
+	PropName::new_unwrap("no nul terminator");
+}

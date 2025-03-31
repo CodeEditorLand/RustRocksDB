@@ -23,12 +23,12 @@ use libc::{self, c_char, c_void, size_t};
 
 use crate::{Error, ffi};
 
-pub(crate) unsafe fn from_cstr(ptr:*const c_char) -> String {
+pub(crate) unsafe fn from_cstr(ptr: *const c_char) -> String {
 	let cstr = unsafe { CStr::from_ptr(ptr as *const _) };
 	String::from_utf8_lossy(cstr.to_bytes()).into_owned()
 }
 
-pub(crate) unsafe fn raw_data(ptr:*const c_char, size:usize) -> Option<Vec<u8>> {
+pub(crate) unsafe fn raw_data(ptr: *const c_char, size: usize) -> Option<Vec<u8>> {
 	if ptr.is_null() {
 		None
 	} else {
@@ -39,7 +39,7 @@ pub(crate) unsafe fn raw_data(ptr:*const c_char, size:usize) -> Option<Vec<u8>> 
 	}
 }
 
-pub fn error_message(ptr:*const c_char) -> String {
+pub fn error_message(ptr: *const c_char) -> String {
 	unsafe {
 		let s = from_cstr(ptr);
 		ffi::rocksdb_free(ptr as *mut c_void);
@@ -47,14 +47,14 @@ pub fn error_message(ptr:*const c_char) -> String {
 	}
 }
 
-pub fn opt_bytes_to_ptr<T:AsRef<[u8]>>(opt:Option<T>) -> *const c_char {
+pub fn opt_bytes_to_ptr<T: AsRef<[u8]>>(opt: Option<T>) -> *const c_char {
 	match opt {
 		Some(v) => v.as_ref().as_ptr() as *const c_char,
 		None => ptr::null(),
 	}
 }
 
-pub(crate) fn to_cpath<P:AsRef<Path>>(path:P) -> Result<CString, Error> {
+pub(crate) fn to_cpath<P: AsRef<Path>>(path: P) -> Result<CString, Error> {
 	match CString::new(path.as_ref().to_string_lossy().as_bytes()) {
 		Ok(c) => Ok(c),
 		Err(e) => Err(Error::new(format!("Failed to convert path to CString: {e}"))),
@@ -135,9 +135,13 @@ impl CStrLike for &str {
 	type Baked = CString;
 	type Error = std::ffi::NulError;
 
-	fn bake(self) -> Result<Self::Baked, Self::Error> { CString::new(self) }
+	fn bake(self) -> Result<Self::Baked, Self::Error> {
+		CString::new(self)
+	}
 
-	fn into_c_string(self) -> Result<CString, Self::Error> { CString::new(self) }
+	fn into_c_string(self) -> Result<CString, Self::Error> {
+		CString::new(self)
+	}
 }
 
 // This is redundant for the most part and exists so that `foo(&string)` (where
@@ -146,18 +150,26 @@ impl CStrLike for &String {
 	type Baked = CString;
 	type Error = std::ffi::NulError;
 
-	fn bake(self) -> Result<Self::Baked, Self::Error> { CString::new(self.as_bytes()) }
+	fn bake(self) -> Result<Self::Baked, Self::Error> {
+		CString::new(self.as_bytes())
+	}
 
-	fn into_c_string(self) -> Result<CString, Self::Error> { CString::new(self.as_bytes()) }
+	fn into_c_string(self) -> Result<CString, Self::Error> {
+		CString::new(self.as_bytes())
+	}
 }
 
 impl CStrLike for &CStr {
 	type Baked = Self;
 	type Error = std::convert::Infallible;
 
-	fn bake(self) -> Result<Self::Baked, Self::Error> { Ok(self) }
+	fn bake(self) -> Result<Self::Baked, Self::Error> {
+		Ok(self)
+	}
 
-	fn into_c_string(self) -> Result<CString, Self::Error> { Ok(self.to_owned()) }
+	fn into_c_string(self) -> Result<CString, Self::Error> {
+		Ok(self.to_owned())
+	}
 }
 
 // This exists so that if caller constructs a `CString` they can pass it into
@@ -168,9 +180,13 @@ impl CStrLike for CString {
 	type Baked = CString;
 	type Error = std::convert::Infallible;
 
-	fn bake(self) -> Result<Self::Baked, Self::Error> { Ok(self) }
+	fn bake(self) -> Result<Self::Baked, Self::Error> {
+		Ok(self)
+	}
 
-	fn into_c_string(self) -> Result<CString, Self::Error> { Ok(self) }
+	fn into_c_string(self) -> Result<CString, Self::Error> {
+		Ok(self)
+	}
 }
 
 // This is redundant for the most part and exists so that `foo(&cstring)` (where
@@ -179,16 +195,20 @@ impl<'a> CStrLike for &'a CString {
 	type Baked = &'a CStr;
 	type Error = std::convert::Infallible;
 
-	fn bake(self) -> Result<Self::Baked, Self::Error> { Ok(self) }
+	fn bake(self) -> Result<Self::Baked, Self::Error> {
+		Ok(self)
+	}
 
-	fn into_c_string(self) -> Result<CString, Self::Error> { Ok(self.clone()) }
+	fn into_c_string(self) -> Result<CString, Self::Error> {
+		Ok(self.clone())
+	}
 }
 
 /// Owned malloc-allocated memory slice.
 /// Do not derive `Clone` for this because it will cause double-free.
 pub struct CSlice {
-	data:*const c_char,
-	len:size_t,
+	data: *const c_char,
+	len: size_t,
 }
 
 impl CSlice {
@@ -200,11 +220,15 @@ impl CSlice {
 	/// using `rocksdb_free`. The caller must ensure that the memory is
 	/// allocated by `malloc` in RocksDB and will not be freed by any other
 	/// means.
-	pub(crate) unsafe fn from_raw_parts(data:*const c_char, len:size_t) -> Self { Self { data, len } }
+	pub(crate) unsafe fn from_raw_parts(data: *const c_char, len: size_t) -> Self {
+		Self { data, len }
+	}
 }
 
 impl AsRef<[u8]> for CSlice {
-	fn as_ref(&self) -> &[u8] { unsafe { std::slice::from_raw_parts(self.data as *const u8, self.len) } }
+	fn as_ref(&self) -> &[u8] {
+		unsafe { std::slice::from_raw_parts(self.data as *const u8, self.len) }
+	}
 }
 
 impl Drop for CSlice {
@@ -217,7 +241,7 @@ impl Drop for CSlice {
 
 #[test]
 fn test_c_str_like_bake() {
-	fn test<S:CStrLike>(value:S) -> Result<usize, S::Error> {
+	fn test<S: CStrLike>(value: S) -> Result<usize, S::Error> {
 		value.bake().map(|value| unsafe { libc::strlen(value.as_ptr()) })
 	}
 
@@ -232,7 +256,9 @@ fn test_c_str_like_bake() {
 
 #[test]
 fn test_c_str_like_into() {
-	fn test<S:CStrLike>(value:S) -> Result<CString, S::Error> { value.into_c_string() }
+	fn test<S: CStrLike>(value: S) -> Result<CString, S::Error> {
+		value.into_c_string()
+	}
 
 	let want = CString::new("foo").unwrap();
 

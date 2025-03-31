@@ -38,7 +38,7 @@ fn test_transaction_db_memory_usage() {
 		options.set_block_based_table_factory(&block_based_options);
 
 		let tx_db_options = TransactionDBOptions::default();
-		let db:TransactionDB<DefaultThreadMode> = TransactionDB::open(&options, &tx_db_options, &path).unwrap();
+		let db: TransactionDB<DefaultThreadMode> = TransactionDB::open(&options, &tx_db_options, &path).unwrap();
 
 		let mut builder = perf::MemoryUsageBuilder::new().unwrap();
 		builder.add_tx_db(&db);

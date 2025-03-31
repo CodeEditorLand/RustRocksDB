@@ -32,7 +32,7 @@ fn transaction_db_property_test() {
 		db.put("key2", "value2").unwrap();
 		db.put("key3", "value3").unwrap();
 
-		let prop_name:&std::ffi::CStr = properties::STATS;
+		let prop_name: &std::ffi::CStr = properties::STATS;
 		let value = db.property_value(prop_name).unwrap().unwrap();
 
 		assert!(value.contains("Compaction Stats"));
@@ -53,7 +53,7 @@ fn transaction_db_int_property_test() {
 		db.put("key1", "value1").unwrap();
 		db.put("key2", "value2").unwrap();
 
-		let prop_name:properties::PropertyName = properties::ESTIMATE_NUM_KEYS.to_owned();
+		let prop_name: properties::PropertyName = properties::ESTIMATE_NUM_KEYS.to_owned();
 		let value = db.property_int_value(&prop_name).unwrap().unwrap();
 
 		assert_eq!(value, 2);

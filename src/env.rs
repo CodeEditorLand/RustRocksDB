@@ -18,7 +18,7 @@ use crate::{Error, ffi};
 pub struct Env(pub(crate) Arc<EnvWrapper>);
 
 pub(crate) struct EnvWrapper {
-	pub(crate) inner:*mut ffi::rocksdb_env_t,
+	pub(crate) inner: *mut ffi::rocksdb_env_t,
 }
 
 impl Drop for EnvWrapper {
@@ -36,7 +36,7 @@ impl Env {
 		if env.is_null() {
 			Err(Error::new("Could not create mem env".to_owned()))
 		} else {
-			Ok(Self(Arc::new(EnvWrapper { inner:env })))
+			Ok(Self(Arc::new(EnvWrapper { inner: env })))
 		}
 	}
 
@@ -47,7 +47,7 @@ impl Env {
 		if env.is_null() {
 			Err(Error::new("Could not create mem env".to_owned()))
 		} else {
-			Ok(Self(Arc::new(EnvWrapper { inner:env })))
+			Ok(Self(Arc::new(EnvWrapper { inner: env })))
 		}
 	}
 
@@ -67,13 +67,15 @@ impl Env {
 	/// such as file IO. These subsystems aren't covered within the scope of
 	/// the C interface or this crate, but from_raw() may be used to hand a
 	/// pre-instrumented Env to this crate for further use.
-	pub unsafe fn from_raw(env:*mut ffi::rocksdb_env_t) -> Self { Self(Arc::new(EnvWrapper { inner:env })) }
+	pub unsafe fn from_raw(env: *mut ffi::rocksdb_env_t) -> Self {
+		Self(Arc::new(EnvWrapper { inner: env }))
+	}
 
 	/// Sets the number of background worker threads of a specific thread pool
 	/// for this environment. `LOW` is the default pool.
 	///
 	/// Default: 1
-	pub fn set_background_threads(&mut self, num_threads:c_int) {
+	pub fn set_background_threads(&mut self, num_threads: c_int) {
 		unsafe {
 			ffi::rocksdb_env_set_background_threads(self.0.inner, num_threads);
 		}
@@ -81,7 +83,7 @@ impl Env {
 
 	/// Sets the size of the high priority thread pool that can be used to
 	/// prevent compactions from stalling memtable flushes.
-	pub fn set_high_priority_background_threads(&mut self, n:c_int) {
+	pub fn set_high_priority_background_threads(&mut self, n: c_int) {
 		unsafe {
 			ffi::rocksdb_env_set_high_priority_background_threads(self.0.inner, n);
 		}
@@ -89,7 +91,7 @@ impl Env {
 
 	/// Sets the size of the low priority thread pool that can be used to
 	/// prevent compactions from stalling memtable flushes.
-	pub fn set_low_priority_background_threads(&mut self, n:c_int) {
+	pub fn set_low_priority_background_threads(&mut self, n: c_int) {
 		unsafe {
 			ffi::rocksdb_env_set_low_priority_background_threads(self.0.inner, n);
 		}
@@ -97,7 +99,7 @@ impl Env {
 
 	/// Sets the size of the bottom priority thread pool that can be used to
 	/// prevent compactions from stalling memtable flushes.
-	pub fn set_bottom_priority_background_threads(&mut self, n:c_int) {
+	pub fn set_bottom_priority_background_threads(&mut self, n: c_int) {
 		unsafe {
 			ffi::rocksdb_env_set_bottom_priority_background_threads(self.0.inner, n);
 		}

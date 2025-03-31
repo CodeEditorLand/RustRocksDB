@@ -18,16 +18,8 @@ use std::{marker::PhantomData, ptr};
 use libc::{c_char, c_void, size_t};
 
 use crate::{
-	AsColumnFamilyRef,
-	DBIteratorWithThreadMode,
-	DBPinnableSlice,
-	DBRawIteratorWithThreadMode,
-	Direction,
-	Error,
-	IteratorMode,
-	ReadOptions,
-	SnapshotWithThreadMode,
-	WriteBatchWithTransaction,
+	AsColumnFamilyRef, DBIteratorWithThreadMode, DBPinnableSlice, DBRawIteratorWithThreadMode, Direction, Error,
+	IteratorMode, ReadOptions, SnapshotWithThreadMode, WriteBatchWithTransaction,
 	db::{DBAccess, convert_values},
 	ffi,
 };
@@ -40,8 +32,8 @@ use crate::{
 /// [`TransactionDB`]: crate::TransactionDB
 /// [`OptimisticTransactionDB`]: crate::OptimisticTransactionDB
 pub struct Transaction<'db, DB> {
-	pub(crate) inner:*mut ffi::rocksdb_transaction_t,
-	pub(crate) _marker:PhantomData<&'db DB>,
+	pub(crate) inner: *mut ffi::rocksdb_transaction_t,
+	pub(crate) _marker: PhantomData<&'db DB>,
 }
 
 unsafe impl<DB> Send for Transaction<'_, DB> {}
@@ -51,60 +43,62 @@ impl<DB> DBAccess for Transaction<'_, DB> {
 		unsafe { ffi::rocksdb_transaction_get_snapshot(self.inner) }
 	}
 
-	unsafe fn release_snapshot(&self, snapshot:*const ffi::rocksdb_snapshot_t) {
+	unsafe fn release_snapshot(&self, snapshot: *const ffi::rocksdb_snapshot_t) {
 		unsafe { ffi::rocksdb_free(snapshot as *mut c_void) };
 	}
 
-	unsafe fn create_iterator(&self, readopts:&ReadOptions) -> *mut ffi::rocksdb_iterator_t {
+	unsafe fn create_iterator(&self, readopts: &ReadOptions) -> *mut ffi::rocksdb_iterator_t {
 		unsafe { ffi::rocksdb_transaction_create_iterator(self.inner, readopts.inner) }
 	}
 
 	unsafe fn create_iterator_cf(
 		&self,
-		cf_handle:*mut ffi::rocksdb_column_family_handle_t,
-		readopts:&ReadOptions,
+		cf_handle: *mut ffi::rocksdb_column_family_handle_t,
+		readopts: &ReadOptions,
 	) -> *mut ffi::rocksdb_iterator_t {
 		unsafe { ffi::rocksdb_transaction_create_iterator_cf(self.inner, readopts.inner, cf_handle) }
 	}
 
-	fn get_opt<K:AsRef<[u8]>>(&self, key:K, readopts:&ReadOptions) -> Result<Option<Vec<u8>>, Error> {
+	fn get_opt<K: AsRef<[u8]>>(&self, key: K, readopts: &ReadOptions) -> Result<Option<Vec<u8>>, Error> {
 		self.get_opt(key, readopts)
 	}
 
-	fn get_cf_opt<K:AsRef<[u8]>>(
+	fn get_cf_opt<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		readopts:&ReadOptions,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		readopts: &ReadOptions,
 	) -> Result<Option<Vec<u8>>, Error> {
 		self.get_cf_opt(cf, key, readopts)
 	}
 
-	fn get_pinned_opt<K:AsRef<[u8]>>(&self, key:K, readopts:&ReadOptions) -> Result<Option<DBPinnableSlice>, Error> {
+	fn get_pinned_opt<K: AsRef<[u8]>>(&self, key: K, readopts: &ReadOptions) -> Result<Option<DBPinnableSlice>, Error> {
 		self.get_pinned_opt(key, readopts)
 	}
 
-	fn get_pinned_cf_opt<K:AsRef<[u8]>>(
+	fn get_pinned_cf_opt<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		readopts:&ReadOptions,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		readopts: &ReadOptions,
 	) -> Result<Option<DBPinnableSlice>, Error> {
 		self.get_pinned_cf_opt(cf, key, readopts)
 	}
 
-	fn multi_get_opt<K, I>(&self, keys:I, readopts:&ReadOptions) -> Vec<Result<Option<Vec<u8>>, Error>>
+	fn multi_get_opt<K, I>(&self, keys: I, readopts: &ReadOptions) -> Vec<Result<Option<Vec<u8>>, Error>>
 	where
 		K: AsRef<[u8]>,
-		I: IntoIterator<Item = K>, {
+		I: IntoIterator<Item = K>,
+	{
 		self.multi_get_opt(keys, readopts)
 	}
 
-	fn multi_get_cf_opt<'b, K, I, W>(&self, keys_cf:I, readopts:&ReadOptions) -> Vec<Result<Option<Vec<u8>>, Error>>
+	fn multi_get_cf_opt<'b, K, I, W>(&self, keys_cf: I, readopts: &ReadOptions) -> Vec<Result<Option<Vec<u8>>, Error>>
 	where
 		K: AsRef<[u8]>,
 		I: IntoIterator<Item = (&'b W, K)>,
-		W: AsColumnFamilyRef + 'b, {
+		W: AsColumnFamilyRef + 'b,
+	{
 		self.multi_get_cf_opt(keys_cf, readopts)
 	}
 }
@@ -139,7 +133,7 @@ impl<DB> Transaction<'_, DB> {
 		Ok(())
 	}
 
-	pub fn set_name(&self, name:&[u8]) -> Result<(), Error> {
+	pub fn set_name(&self, name: &[u8]) -> Result<(), Error> {
 		let ptr = name.as_ptr();
 		let len = name.len();
 		unsafe {
@@ -176,7 +170,9 @@ impl<DB> Transaction<'_, DB> {
 	/// inside which doesn't affect read operations.
 	///
 	/// [`TransactionOptions`]: crate::TransactionOptions
-	pub fn snapshot(&self) -> SnapshotWithThreadMode<Self> { SnapshotWithThreadMode::new(self) }
+	pub fn snapshot(&self) -> SnapshotWithThreadMode<Self> {
+		SnapshotWithThreadMode::new(self)
+	}
 
 	/// Discard all batched writes in this transaction.
 	pub fn rollback(&self) -> Result<(), Error> {
@@ -215,11 +211,11 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`get_cf_opt`] for details.
 	///
 	/// [`get_cf_opt`]: Self::get_cf_opt
-	pub fn get<K:AsRef<[u8]>>(&self, key:K) -> Result<Option<Vec<u8>>, Error> {
+	pub fn get<K: AsRef<[u8]>>(&self, key: K) -> Result<Option<Vec<u8>>, Error> {
 		self.get_opt(key, &ReadOptions::default())
 	}
 
-	pub fn get_pinned<K:AsRef<[u8]>>(&self, key:K) -> Result<Option<DBPinnableSlice>, Error> {
+	pub fn get_pinned<K: AsRef<[u8]>>(&self, key: K) -> Result<Option<DBPinnableSlice>, Error> {
 		self.get_pinned_opt(key, &ReadOptions::default())
 	}
 
@@ -228,14 +224,14 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`get_cf_opt`] for details.
 	///
 	/// [`get_cf_opt`]: Self::get_cf_opt
-	pub fn get_cf<K:AsRef<[u8]>>(&self, cf:&impl AsColumnFamilyRef, key:K) -> Result<Option<Vec<u8>>, Error> {
+	pub fn get_cf<K: AsRef<[u8]>>(&self, cf: &impl AsColumnFamilyRef, key: K) -> Result<Option<Vec<u8>>, Error> {
 		self.get_cf_opt(cf, key, &ReadOptions::default())
 	}
 
-	pub fn get_pinned_cf<K:AsRef<[u8]>>(
+	pub fn get_pinned_cf<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
 	) -> Result<Option<DBPinnableSlice>, Error> {
 		self.get_pinned_cf_opt(cf, key, &ReadOptions::default())
 	}
@@ -248,14 +244,14 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`get_for_update_cf_opt`] for details.
 	///
 	/// [`get_for_update_cf_opt`]: Self::get_for_update_cf_opt
-	pub fn get_for_update<K:AsRef<[u8]>>(&self, key:K, exclusive:bool) -> Result<Option<Vec<u8>>, Error> {
+	pub fn get_for_update<K: AsRef<[u8]>>(&self, key: K, exclusive: bool) -> Result<Option<Vec<u8>>, Error> {
 		self.get_for_update_opt(key, exclusive, &ReadOptions::default())
 	}
 
-	pub fn get_pinned_for_update<K:AsRef<[u8]>>(
+	pub fn get_pinned_for_update<K: AsRef<[u8]>>(
 		&self,
-		key:K,
-		exclusive:bool,
+		key: K,
+		exclusive: bool,
 	) -> Result<Option<DBPinnableSlice>, Error> {
 		self.get_pinned_for_update_opt(key, exclusive, &ReadOptions::default())
 	}
@@ -268,20 +264,20 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`get_for_update_cf_opt`] for details.
 	///
 	/// [`get_for_update_cf_opt`]: Self::get_for_update_cf_opt
-	pub fn get_for_update_cf<K:AsRef<[u8]>>(
+	pub fn get_for_update_cf<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		exclusive:bool,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		exclusive: bool,
 	) -> Result<Option<Vec<u8>>, Error> {
 		self.get_for_update_cf_opt(cf, key, exclusive, &ReadOptions::default())
 	}
 
-	pub fn get_pinned_for_update_cf<K:AsRef<[u8]>>(
+	pub fn get_pinned_for_update_cf<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		exclusive:bool,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		exclusive: bool,
 	) -> Result<Option<DBPinnableSlice>, Error> {
 		self.get_pinned_for_update_cf_opt(cf, key, exclusive, &ReadOptions::default())
 	}
@@ -291,14 +287,14 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`get_cf_opt`] for details.
 	///
 	/// [`get_cf_opt`]: Self::get_cf_opt
-	pub fn get_opt<K:AsRef<[u8]>>(&self, key:K, readopts:&ReadOptions) -> Result<Option<Vec<u8>>, Error> {
+	pub fn get_opt<K: AsRef<[u8]>>(&self, key: K, readopts: &ReadOptions) -> Result<Option<Vec<u8>>, Error> {
 		self.get_pinned_opt(key, readopts).map(|x| x.map(|v| v.as_ref().to_vec()))
 	}
 
-	pub fn get_pinned_opt<K:AsRef<[u8]>>(
+	pub fn get_pinned_opt<K: AsRef<[u8]>>(
 		&self,
-		key:K,
-		readopts:&ReadOptions,
+		key: K,
+		readopts: &ReadOptions,
 	) -> Result<Option<DBPinnableSlice>, Error> {
 		let key = key.as_ref();
 		unsafe {
@@ -321,21 +317,21 @@ impl<DB> Transaction<'_, DB> {
 	/// Merge.
 	///
 	/// [`MergeInProgress`]: crate::ErrorKind::MergeInProgress
-	pub fn get_cf_opt<K:AsRef<[u8]>>(
+	pub fn get_cf_opt<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		readopts:&ReadOptions,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		readopts: &ReadOptions,
 	) -> Result<Option<Vec<u8>>, Error> {
 		self.get_pinned_cf_opt(cf, key, readopts)
 			.map(|x| x.map(|v| v.as_ref().to_vec()))
 	}
 
-	pub fn get_pinned_cf_opt<K:AsRef<[u8]>>(
+	pub fn get_pinned_cf_opt<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		readopts:&ReadOptions,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		readopts: &ReadOptions,
 	) -> Result<Option<DBPinnableSlice>, Error> {
 		let key = key.as_ref();
 		unsafe {
@@ -358,21 +354,21 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`get_for_update_cf_opt`] for details.
 	///
 	/// [`get_for_update_cf_opt`]: Self::get_for_update_cf_opt
-	pub fn get_for_update_opt<K:AsRef<[u8]>>(
+	pub fn get_for_update_opt<K: AsRef<[u8]>>(
 		&self,
-		key:K,
-		exclusive:bool,
-		opts:&ReadOptions,
+		key: K,
+		exclusive: bool,
+		opts: &ReadOptions,
 	) -> Result<Option<Vec<u8>>, Error> {
 		self.get_pinned_for_update_opt(key, exclusive, opts)
 			.map(|x| x.map(|v| v.as_ref().to_vec()))
 	}
 
-	pub fn get_pinned_for_update_opt<K:AsRef<[u8]>>(
+	pub fn get_pinned_for_update_opt<K: AsRef<[u8]>>(
 		&self,
-		key:K,
-		exclusive:bool,
-		opts:&ReadOptions,
+		key: K,
+		exclusive: bool,
+		opts: &ReadOptions,
 	) -> Result<Option<DBPinnableSlice>, Error> {
 		let key = key.as_ref();
 		unsafe {
@@ -416,23 +412,23 @@ impl<DB> Transaction<'_, DB> {
 	/// [`OptimisticTransactionDB`]: crate::OptimisticTransactionDB
 	/// [`commit`]: Self::commit
 	/// [`DB::get`]: crate::DB::get
-	pub fn get_for_update_cf_opt<K:AsRef<[u8]>>(
+	pub fn get_for_update_cf_opt<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		exclusive:bool,
-		opts:&ReadOptions,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		exclusive: bool,
+		opts: &ReadOptions,
 	) -> Result<Option<Vec<u8>>, Error> {
 		self.get_pinned_for_update_cf_opt(cf, key, exclusive, opts)
 			.map(|x| x.map(|v| v.as_ref().to_vec()))
 	}
 
-	pub fn get_pinned_for_update_cf_opt<K:AsRef<[u8]>>(
+	pub fn get_pinned_for_update_cf_opt<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		exclusive:bool,
-		opts:&ReadOptions,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		exclusive: bool,
+		opts: &ReadOptions,
 	) -> Result<Option<DBPinnableSlice>, Error> {
 		let key = key.as_ref();
 		unsafe {
@@ -449,26 +445,28 @@ impl<DB> Transaction<'_, DB> {
 	}
 
 	/// Return the values associated with the given keys.
-	pub fn multi_get<K, I>(&self, keys:I) -> Vec<Result<Option<Vec<u8>>, Error>>
+	pub fn multi_get<K, I>(&self, keys: I) -> Vec<Result<Option<Vec<u8>>, Error>>
 	where
 		K: AsRef<[u8]>,
-		I: IntoIterator<Item = K>, {
+		I: IntoIterator<Item = K>,
+	{
 		self.multi_get_opt(keys, &ReadOptions::default())
 	}
 
 	/// Return the values associated with the given keys using read options.
-	pub fn multi_get_opt<K, I>(&self, keys:I, readopts:&ReadOptions) -> Vec<Result<Option<Vec<u8>>, Error>>
+	pub fn multi_get_opt<K, I>(&self, keys: I, readopts: &ReadOptions) -> Vec<Result<Option<Vec<u8>>, Error>>
 	where
 		K: AsRef<[u8]>,
-		I: IntoIterator<Item = K>, {
-		let (keys, keys_sizes):(Vec<Box<[u8]>>, Vec<_>) = keys
+		I: IntoIterator<Item = K>,
+	{
+		let (keys, keys_sizes): (Vec<Box<[u8]>>, Vec<_>) = keys
 			.into_iter()
 			.map(|key| {
 				let key = key.as_ref();
 				(Box::from(key), key.len())
 			})
 			.unzip();
-		let ptr_keys:Vec<_> = keys.iter().map(|k| k.as_ptr() as *const c_char).collect();
+		let ptr_keys: Vec<_> = keys.iter().map(|k| k.as_ptr() as *const c_char).collect();
 
 		let mut values = vec![ptr::null_mut(); keys.len()];
 		let mut values_sizes = vec![0_usize; keys.len()];
@@ -490,34 +488,36 @@ impl<DB> Transaction<'_, DB> {
 	}
 
 	/// Return the values associated with the given keys and column families.
-	pub fn multi_get_cf<'a, 'b:'a, K, I, W>(&'a self, keys:I) -> Vec<Result<Option<Vec<u8>>, Error>>
+	pub fn multi_get_cf<'a, 'b: 'a, K, I, W>(&'a self, keys: I) -> Vec<Result<Option<Vec<u8>>, Error>>
 	where
 		K: AsRef<[u8]>,
 		I: IntoIterator<Item = (&'b W, K)>,
-		W: 'b + AsColumnFamilyRef, {
+		W: 'b + AsColumnFamilyRef,
+	{
 		self.multi_get_cf_opt(keys, &ReadOptions::default())
 	}
 
 	/// Return the values associated with the given keys and column families
 	/// using read options.
-	pub fn multi_get_cf_opt<'a, 'b:'a, K, I, W>(
+	pub fn multi_get_cf_opt<'a, 'b: 'a, K, I, W>(
 		&'a self,
-		keys:I,
-		readopts:&ReadOptions,
+		keys: I,
+		readopts: &ReadOptions,
 	) -> Vec<Result<Option<Vec<u8>>, Error>>
 	where
 		K: AsRef<[u8]>,
 		I: IntoIterator<Item = (&'b W, K)>,
-		W: 'b + AsColumnFamilyRef, {
-		let (cfs_and_keys, keys_sizes):(Vec<(_, Box<[u8]>)>, Vec<_>) = keys
+		W: 'b + AsColumnFamilyRef,
+	{
+		let (cfs_and_keys, keys_sizes): (Vec<(_, Box<[u8]>)>, Vec<_>) = keys
 			.into_iter()
 			.map(|(cf, key)| {
 				let key = key.as_ref();
 				((cf, Box::from(key)), key.len())
 			})
 			.unzip();
-		let ptr_keys:Vec<_> = cfs_and_keys.iter().map(|(_, k)| k.as_ptr() as *const c_char).collect();
-		let ptr_cfs:Vec<_> = cfs_and_keys.iter().map(|(c, _)| c.inner().cast_const()).collect();
+		let ptr_keys: Vec<_> = cfs_and_keys.iter().map(|(_, k)| k.as_ptr() as *const c_char).collect();
+		let ptr_cfs: Vec<_> = cfs_and_keys.iter().map(|(c, _)| c.inner().cast_const()).collect();
 
 		let mut values = vec![ptr::null_mut(); ptr_keys.len()];
 		let mut values_sizes = vec![0_usize; ptr_keys.len()];
@@ -545,7 +545,7 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`put_cf`] for details.
 	///
 	/// [`put_cf`]: Self::put_cf
-	pub fn put<K:AsRef<[u8]>, V:AsRef<[u8]>>(&self, key:K, value:V) -> Result<(), Error> {
+	pub fn put<K: AsRef<[u8]>, V: AsRef<[u8]>>(&self, key: K, value: V) -> Result<(), Error> {
 		let key = key.as_ref();
 		let value = value.as_ref();
 		unsafe {
@@ -577,11 +577,11 @@ impl<DB> Transaction<'_, DB> {
 	/// [`MergeInProgress`]: crate::ErrorKind::MergeInProgress
 	/// [`TransactionDB`]: crate::TransactionDB
 	/// [`OptimisticTransactionDB`]: crate::OptimisticTransactionDB
-	pub fn put_cf<K:AsRef<[u8]>, V:AsRef<[u8]>>(
+	pub fn put_cf<K: AsRef<[u8]>, V: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		value:V,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		value: V,
 	) -> Result<(), Error> {
 		let key = key.as_ref();
 		let value = value.as_ref();
@@ -604,7 +604,7 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`merge_cf`] for details.
 	///
 	/// [`merge_cf`]: Self::merge_cf
-	pub fn merge<K:AsRef<[u8]>, V:AsRef<[u8]>>(&self, key:K, value:V) -> Result<(), Error> {
+	pub fn merge<K: AsRef<[u8]>, V: AsRef<[u8]>>(&self, key: K, value: V) -> Result<(), Error> {
 		let key = key.as_ref();
 		let value = value.as_ref();
 		unsafe {
@@ -635,11 +635,11 @@ impl<DB> Transaction<'_, DB> {
 	/// [`TryAgain`]: crate::ErrorKind::TryAgain
 	/// [`MergeInProgress`]: crate::ErrorKind::MergeInProgress
 	/// [`TransactionDB`]: crate::TransactionDB
-	pub fn merge_cf<K:AsRef<[u8]>, V:AsRef<[u8]>>(
+	pub fn merge_cf<K: AsRef<[u8]>, V: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		key:K,
-		value:V,
+		cf: &impl AsColumnFamilyRef,
+		key: K,
+		value: V,
 	) -> Result<(), Error> {
 		let key = key.as_ref();
 		let value = value.as_ref();
@@ -661,7 +661,7 @@ impl<DB> Transaction<'_, DB> {
 	/// See [`delete_cf`] for details.
 	///
 	/// [`delete_cf`]: Self::delete_cf
-	pub fn delete<K:AsRef<[u8]>>(&self, key:K) -> Result<(), Error> {
+	pub fn delete<K: AsRef<[u8]>>(&self, key: K) -> Result<(), Error> {
 		let key = key.as_ref();
 		unsafe {
 			ffi_try!(ffi::rocksdb_transaction_delete(
@@ -689,7 +689,7 @@ impl<DB> Transaction<'_, DB> {
 	/// [`TryAgain`]: crate::ErrorKind::TryAgain
 	/// [`MergeInProgress`]: crate::ErrorKind::MergeInProgress
 	/// [`TransactionDB`]: crate::TransactionDB
-	pub fn delete_cf<K:AsRef<[u8]>>(&self, cf:&impl AsColumnFamilyRef, key:K) -> Result<(), Error> {
+	pub fn delete_cf<K: AsRef<[u8]>>(&self, cf: &impl AsColumnFamilyRef, key: K) -> Result<(), Error> {
 		let key = key.as_ref();
 		unsafe {
 			ffi_try!(ffi::rocksdb_transaction_delete_cf(
@@ -702,15 +702,15 @@ impl<DB> Transaction<'_, DB> {
 		Ok(())
 	}
 
-	pub fn iterator<'a:'b, 'b>(&'a self, mode:IteratorMode) -> DBIteratorWithThreadMode<'b, Self> {
+	pub fn iterator<'a: 'b, 'b>(&'a self, mode: IteratorMode) -> DBIteratorWithThreadMode<'b, Self> {
 		let readopts = ReadOptions::default();
 		self.iterator_opt(mode, readopts)
 	}
 
-	pub fn iterator_opt<'a:'b, 'b>(
+	pub fn iterator_opt<'a: 'b, 'b>(
 		&'a self,
-		mode:IteratorMode,
-		readopts:ReadOptions,
+		mode: IteratorMode,
+		readopts: ReadOptions,
 	) -> DBIteratorWithThreadMode<'b, Self> {
 		DBIteratorWithThreadMode::new(self, readopts, mode)
 	}
@@ -718,11 +718,11 @@ impl<DB> Transaction<'_, DB> {
 	/// Opens an iterator using the provided ReadOptions.
 	/// This is used when you want to iterate over a specific ColumnFamily with
 	/// a modified ReadOptions.
-	pub fn iterator_cf_opt<'a:'b, 'b>(
+	pub fn iterator_cf_opt<'a: 'b, 'b>(
 		&'a self,
-		cf_handle:&impl AsColumnFamilyRef,
-		readopts:ReadOptions,
-		mode:IteratorMode,
+		cf_handle: &impl AsColumnFamilyRef,
+		readopts: ReadOptions,
+		mode: IteratorMode,
 	) -> DBIteratorWithThreadMode<'b, Self> {
 		DBIteratorWithThreadMode::new_cf(self, cf_handle.inner(), readopts, mode)
 	}
@@ -730,41 +730,41 @@ impl<DB> Transaction<'_, DB> {
 	/// Opens an iterator with `set_total_order_seek` enabled.
 	/// This must be used to iterate across prefixes when `set_memtable_factory`
 	/// has been called with a Hash-based implementation.
-	pub fn full_iterator<'a:'b, 'b>(&'a self, mode:IteratorMode) -> DBIteratorWithThreadMode<'b, Self> {
+	pub fn full_iterator<'a: 'b, 'b>(&'a self, mode: IteratorMode) -> DBIteratorWithThreadMode<'b, Self> {
 		let mut opts = ReadOptions::default();
 		opts.set_total_order_seek(true);
 		DBIteratorWithThreadMode::new(self, opts, mode)
 	}
 
-	pub fn prefix_iterator<'a:'b, 'b, P:AsRef<[u8]>>(&'a self, prefix:P) -> DBIteratorWithThreadMode<'b, Self> {
+	pub fn prefix_iterator<'a: 'b, 'b, P: AsRef<[u8]>>(&'a self, prefix: P) -> DBIteratorWithThreadMode<'b, Self> {
 		let mut opts = ReadOptions::default();
 		opts.set_prefix_same_as_start(true);
 		DBIteratorWithThreadMode::new(self, opts, IteratorMode::From(prefix.as_ref(), Direction::Forward))
 	}
 
-	pub fn iterator_cf<'a:'b, 'b>(
+	pub fn iterator_cf<'a: 'b, 'b>(
 		&'a self,
-		cf_handle:&impl AsColumnFamilyRef,
-		mode:IteratorMode,
+		cf_handle: &impl AsColumnFamilyRef,
+		mode: IteratorMode,
 	) -> DBIteratorWithThreadMode<'b, Self> {
 		let opts = ReadOptions::default();
 		DBIteratorWithThreadMode::new_cf(self, cf_handle.inner(), opts, mode)
 	}
 
-	pub fn full_iterator_cf<'a:'b, 'b>(
+	pub fn full_iterator_cf<'a: 'b, 'b>(
 		&'a self,
-		cf_handle:&impl AsColumnFamilyRef,
-		mode:IteratorMode,
+		cf_handle: &impl AsColumnFamilyRef,
+		mode: IteratorMode,
 	) -> DBIteratorWithThreadMode<'b, Self> {
 		let mut opts = ReadOptions::default();
 		opts.set_total_order_seek(true);
 		DBIteratorWithThreadMode::new_cf(self, cf_handle.inner(), opts, mode)
 	}
 
-	pub fn prefix_iterator_cf<'a, P:AsRef<[u8]>>(
+	pub fn prefix_iterator_cf<'a, P: AsRef<[u8]>>(
 		&'a self,
-		cf_handle:&impl AsColumnFamilyRef,
-		prefix:P,
+		cf_handle: &impl AsColumnFamilyRef,
+		prefix: P,
 	) -> DBIteratorWithThreadMode<'a, Self> {
 		let mut opts = ReadOptions::default();
 		opts.set_prefix_same_as_start(true);
@@ -777,32 +777,32 @@ impl<DB> Transaction<'_, DB> {
 	}
 
 	/// Opens a raw iterator over the database, using the default read options
-	pub fn raw_iterator<'a:'b, 'b>(&'a self) -> DBRawIteratorWithThreadMode<'b, Self> {
+	pub fn raw_iterator<'a: 'b, 'b>(&'a self) -> DBRawIteratorWithThreadMode<'b, Self> {
 		let opts = ReadOptions::default();
 		DBRawIteratorWithThreadMode::new(self, opts)
 	}
 
 	/// Opens a raw iterator over the given column family, using the default
 	/// read options
-	pub fn raw_iterator_cf<'a:'b, 'b>(
+	pub fn raw_iterator_cf<'a: 'b, 'b>(
 		&'a self,
-		cf_handle:&impl AsColumnFamilyRef,
+		cf_handle: &impl AsColumnFamilyRef,
 	) -> DBRawIteratorWithThreadMode<'b, Self> {
 		let opts = ReadOptions::default();
 		DBRawIteratorWithThreadMode::new_cf(self, cf_handle.inner(), opts)
 	}
 
 	/// Opens a raw iterator over the database, using the given read options
-	pub fn raw_iterator_opt<'a:'b, 'b>(&'a self, readopts:ReadOptions) -> DBRawIteratorWithThreadMode<'b, Self> {
+	pub fn raw_iterator_opt<'a: 'b, 'b>(&'a self, readopts: ReadOptions) -> DBRawIteratorWithThreadMode<'b, Self> {
 		DBRawIteratorWithThreadMode::new(self, readopts)
 	}
 
 	/// Opens a raw iterator over the given column family, using the given read
 	/// options
-	pub fn raw_iterator_cf_opt<'a:'b, 'b>(
+	pub fn raw_iterator_cf_opt<'a: 'b, 'b>(
 		&'a self,
-		cf_handle:&impl AsColumnFamilyRef,
-		readopts:ReadOptions,
+		cf_handle: &impl AsColumnFamilyRef,
+		readopts: ReadOptions,
 	) -> DBRawIteratorWithThreadMode<'b, Self> {
 		DBRawIteratorWithThreadMode::new_cf(self, cf_handle.inner(), readopts)
 	}
@@ -810,15 +810,15 @@ impl<DB> Transaction<'_, DB> {
 	pub fn get_writebatch(&self) -> WriteBatchWithTransaction<true> {
 		unsafe {
 			let wi = ffi::rocksdb_transaction_get_writebatch_wi(self.inner);
-			let mut len:usize = 0;
+			let mut len: usize = 0;
 			let ptr = ffi::rocksdb_writebatch_wi_data(wi, &mut len as _);
 			let writebatch = ffi::rocksdb_writebatch_create_from(ptr, len);
 			ffi::rocksdb_free(wi as *mut c_void);
-			WriteBatchWithTransaction { inner:writebatch }
+			WriteBatchWithTransaction { inner: writebatch }
 		}
 	}
 
-	pub fn rebuild_from_writebatch(&self, writebatch:&WriteBatchWithTransaction<true>) -> Result<(), Error> {
+	pub fn rebuild_from_writebatch(&self, writebatch: &WriteBatchWithTransaction<true>) -> Result<(), Error> {
 		unsafe {
 			ffi_try!(ffi::rocksdb_transaction_rebuild_from_writebatch(self.inner, writebatch.inner));
 		}

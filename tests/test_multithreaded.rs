@@ -19,7 +19,7 @@ use std::{sync::Arc, thread};
 use rocksdb::DB;
 use util::DBPath;
 
-const N:usize = 100_000;
+const N: usize = 100_000;
 
 #[test]
 pub fn test_multithreaded() {

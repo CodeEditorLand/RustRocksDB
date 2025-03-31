@@ -16,7 +16,7 @@
 use crate::ffi;
 
 pub struct TransactionOptions {
-	pub(crate) inner:*mut ffi::rocksdb_transaction_options_t,
+	pub(crate) inner: *mut ffi::rocksdb_transaction_options_t,
 }
 
 unsafe impl Send for TransactionOptions {}
@@ -26,14 +26,16 @@ impl Default for TransactionOptions {
 	fn default() -> Self {
 		let txn_opts = unsafe { ffi::rocksdb_transaction_options_create() };
 		assert!(!txn_opts.is_null(), "Could not create RocksDB transaction options");
-		Self { inner:txn_opts }
+		Self { inner: txn_opts }
 	}
 }
 
 impl TransactionOptions {
-	pub fn new() -> TransactionOptions { TransactionOptions::default() }
+	pub fn new() -> TransactionOptions {
+		TransactionOptions::default()
+	}
 
-	pub fn set_skip_prepare(&mut self, skip_prepare:bool) {
+	pub fn set_skip_prepare(&mut self, skip_prepare: bool) {
 		unsafe {
 			ffi::rocksdb_transaction_options_set_set_snapshot(self.inner, u8::from(skip_prepare));
 		}
@@ -57,7 +59,7 @@ impl TransactionOptions {
 	///
 	/// Calling `set_snapshot` will not affect the version of Data returned by
 	/// `get` methods.
-	pub fn set_snapshot(&mut self, snapshot:bool) {
+	pub fn set_snapshot(&mut self, snapshot: bool) {
 		unsafe {
 			ffi::rocksdb_transaction_options_set_set_snapshot(self.inner, u8::from(snapshot));
 		}
@@ -70,7 +72,7 @@ impl TransactionOptions {
 	/// Status::Busy.  The user should retry their transaction.
 	///
 	/// Default: false.
-	pub fn set_deadlock_detect(&mut self, deadlock_detect:bool) {
+	pub fn set_deadlock_detect(&mut self, deadlock_detect: bool) {
 		unsafe {
 			ffi::rocksdb_transaction_options_set_deadlock_detect(self.inner, u8::from(deadlock_detect));
 		}
@@ -84,7 +86,7 @@ impl TransactionOptions {
 	/// used.
 	///
 	/// Default: -1.
-	pub fn set_lock_timeout(&mut self, lock_timeout:i64) {
+	pub fn set_lock_timeout(&mut self, lock_timeout: i64) {
 		unsafe {
 			ffi::rocksdb_transaction_options_set_lock_timeout(self.inner, lock_timeout);
 		}
@@ -99,7 +101,7 @@ impl TransactionOptions {
 	/// writers.
 	///
 	/// Default: -1.
-	pub fn set_expiration(&mut self, expiration:i64) {
+	pub fn set_expiration(&mut self, expiration: i64) {
 		unsafe {
 			ffi::rocksdb_transaction_options_set_expiration(self.inner, expiration);
 		}
@@ -108,7 +110,7 @@ impl TransactionOptions {
 	/// Specifies the number of traversals to make during deadlock detection.
 	///
 	/// Default: 50.
-	pub fn set_deadlock_detect_depth(&mut self, depth:i64) {
+	pub fn set_deadlock_detect_depth(&mut self, depth: i64) {
 		unsafe {
 			ffi::rocksdb_transaction_options_set_deadlock_detect_depth(self.inner, depth);
 		}
@@ -118,7 +120,7 @@ impl TransactionOptions {
 	/// no limit.
 	///
 	/// Default: 0.
-	pub fn set_max_write_batch_size(&mut self, size:usize) {
+	pub fn set_max_write_batch_size(&mut self, size: usize) {
 		unsafe {
 			ffi::rocksdb_transaction_options_set_max_write_batch_size(self.inner, size);
 		}
@@ -134,7 +136,7 @@ impl Drop for TransactionOptions {
 }
 
 pub struct TransactionDBOptions {
-	pub(crate) inner:*mut ffi::rocksdb_transactiondb_options_t,
+	pub(crate) inner: *mut ffi::rocksdb_transactiondb_options_t,
 }
 
 unsafe impl Send for TransactionDBOptions {}
@@ -144,12 +146,14 @@ impl Default for TransactionDBOptions {
 	fn default() -> Self {
 		let txn_db_opts = unsafe { ffi::rocksdb_transactiondb_options_create() };
 		assert!(!txn_db_opts.is_null(), "Could not create RocksDB transaction_db options");
-		Self { inner:txn_db_opts }
+		Self { inner: txn_db_opts }
 	}
 }
 
 impl TransactionDBOptions {
-	pub fn new() -> TransactionDBOptions { TransactionDBOptions::default() }
+	pub fn new() -> TransactionDBOptions {
+		TransactionDBOptions::default()
+	}
 
 	/// Specifies the wait timeout in milliseconds when writing a key
 	/// outside a transaction (i.e. by calling `TransactionDB::put` directly).
@@ -165,7 +169,7 @@ impl TransactionDBOptions {
 	/// have a small expiration set.
 	///
 	/// Default: 1000(1s).
-	pub fn set_default_lock_timeout(&mut self, default_lock_timeout:i64) {
+	pub fn set_default_lock_timeout(&mut self, default_lock_timeout: i64) {
 		unsafe {
 			ffi::rocksdb_transactiondb_options_set_default_lock_timeout(self.inner, default_lock_timeout);
 		}
@@ -180,7 +184,7 @@ impl TransactionDBOptions {
 	/// deadlock-detection to recover from a deadlock.
 	///
 	/// Default: 1000(1s).
-	pub fn set_txn_lock_timeout(&mut self, txn_lock_timeout:i64) {
+	pub fn set_txn_lock_timeout(&mut self, txn_lock_timeout: i64) {
 		unsafe {
 			ffi::rocksdb_transactiondb_options_set_transaction_lock_timeout(self.inner, txn_lock_timeout);
 		}
@@ -194,7 +198,7 @@ impl TransactionDBOptions {
 	/// If this value is not positive, no limit will be enforced.
 	///
 	/// Default: -1.
-	pub fn set_max_num_locks(&mut self, max_num_locks:i64) {
+	pub fn set_max_num_locks(&mut self, max_num_locks: i64) {
 		unsafe {
 			ffi::rocksdb_transactiondb_options_set_max_num_locks(self.inner, max_num_locks);
 		}
@@ -207,7 +211,7 @@ impl TransactionDBOptions {
 	/// separate mutex.
 	///
 	/// Default: 16.
-	pub fn set_num_stripes(&mut self, num_stripes:usize) {
+	pub fn set_num_stripes(&mut self, num_stripes: usize) {
 		unsafe {
 			ffi::rocksdb_transactiondb_options_set_num_stripes(self.inner, num_stripes);
 		}
@@ -223,7 +227,7 @@ impl Drop for TransactionDBOptions {
 }
 
 pub struct OptimisticTransactionOptions {
-	pub(crate) inner:*mut ffi::rocksdb_optimistictransaction_options_t,
+	pub(crate) inner: *mut ffi::rocksdb_optimistictransaction_options_t,
 }
 
 unsafe impl Send for OptimisticTransactionOptions {}
@@ -233,12 +237,14 @@ impl Default for OptimisticTransactionOptions {
 	fn default() -> Self {
 		let txn_opts = unsafe { ffi::rocksdb_optimistictransaction_options_create() };
 		assert!(!txn_opts.is_null(), "Could not create RocksDB optimistic transaction options");
-		Self { inner:txn_opts }
+		Self { inner: txn_opts }
 	}
 }
 
 impl OptimisticTransactionOptions {
-	pub fn new() -> OptimisticTransactionOptions { OptimisticTransactionOptions::default() }
+	pub fn new() -> OptimisticTransactionOptions {
+		OptimisticTransactionOptions::default()
+	}
 
 	/// Specifies use snapshot or not.
 	///
@@ -258,7 +264,7 @@ impl OptimisticTransactionOptions {
 	///
 	/// Calling `set_snapshot` will not affect the version of Data returned by
 	/// `get` methods.
-	pub fn set_snapshot(&mut self, snapshot:bool) {
+	pub fn set_snapshot(&mut self, snapshot: bool) {
 		unsafe {
 			ffi::rocksdb_optimistictransaction_options_set_set_snapshot(self.inner, u8::from(snapshot));
 		}

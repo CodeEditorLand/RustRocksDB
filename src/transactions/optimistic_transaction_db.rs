@@ -18,15 +18,8 @@ use std::{collections::BTreeMap, ffi::CString, fs, iter, marker::PhantomData, pa
 use libc::{c_char, c_int, size_t};
 
 use crate::{
-	AsColumnFamilyRef,
-	ColumnFamilyDescriptor,
-	DEFAULT_COLUMN_FAMILY_NAME,
-	Error,
-	OptimisticTransactionOptions,
-	Options,
-	ThreadMode,
-	Transaction,
-	WriteOptions,
+	AsColumnFamilyRef, ColumnFamilyDescriptor, DEFAULT_COLUMN_FAMILY_NAME, Error, OptimisticTransactionOptions,
+	Options, ThreadMode, Transaction, WriteOptions,
 	column_family::ColumnFamilyTtl,
 	db::{DBCommon, DBInner},
 	ffi,
@@ -74,12 +67,14 @@ pub type OptimisticTransactionDB<T = crate::SingleThreaded> = DBCommon<T, Optimi
 pub type OptimisticTransactionDB<T = crate::MultiThreaded> = DBCommon<T, OptimisticTransactionDBInner>;
 
 pub struct OptimisticTransactionDBInner {
-	base:*mut ffi::rocksdb_t,
-	db:*mut ffi::rocksdb_optimistictransactiondb_t,
+	base: *mut ffi::rocksdb_t,
+	db: *mut ffi::rocksdb_optimistictransactiondb_t,
 }
 
 impl DBInner for OptimisticTransactionDBInner {
-	fn inner(&self) -> *mut ffi::rocksdb_t { self.base }
+	fn inner(&self) -> *mut ffi::rocksdb_t {
+		self.base
+	}
 }
 
 impl Drop for OptimisticTransactionDBInner {
@@ -92,16 +87,18 @@ impl Drop for OptimisticTransactionDBInner {
 }
 
 /// Methods of `OptimisticTransactionDB`.
-impl<T:ThreadMode> OptimisticTransactionDB<T> {
+impl<T: ThreadMode> OptimisticTransactionDB<T> {
 	/// Opens a database with default options.
-	pub fn open_default<P:AsRef<Path>>(path:P) -> Result<Self, Error> {
+	pub fn open_default<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
 		let mut opts = Options::default();
 		opts.create_if_missing(true);
 		Self::open(&opts, path)
 	}
 
 	/// Opens the database with the specified options.
-	pub fn open<P:AsRef<Path>>(opts:&Options, path:P) -> Result<Self, Error> { Self::open_cf(opts, path, None::<&str>) }
+	pub fn open<P: AsRef<Path>>(opts: &Options, path: P) -> Result<Self, Error> {
+		Self::open_cf(opts, path, None::<&str>)
+	}
 
 	/// Opens a database with the given database options and column family
 	/// names.
@@ -111,11 +108,12 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 	/// `Options::default()`. If you want to open `default` column family with
 	/// custom options, use `open_cf_descriptors` and
 	/// provide a `ColumnFamilyDescriptor` with the desired options.
-	pub fn open_cf<P, I, N>(opts:&Options, path:P, cfs:I) -> Result<Self, Error>
+	pub fn open_cf<P, I, N>(opts: &Options, path: P, cfs: I) -> Result<Self, Error>
 	where
 		P: AsRef<Path>,
 		I: IntoIterator<Item = N>,
-		N: AsRef<str>, {
+		N: AsRef<str>,
+	{
 		let cfs = cfs
 			.into_iter()
 			.map(|name| ColumnFamilyDescriptor::new(name.as_ref(), Options::default()));
@@ -125,19 +123,21 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 
 	/// Opens a database with the given database options and column family
 	/// descriptors.
-	pub fn open_cf_descriptors<P, I>(opts:&Options, path:P, cfs:I) -> Result<Self, Error>
+	pub fn open_cf_descriptors<P, I>(opts: &Options, path: P, cfs: I) -> Result<Self, Error>
 	where
 		P: AsRef<Path>,
-		I: IntoIterator<Item = ColumnFamilyDescriptor>, {
+		I: IntoIterator<Item = ColumnFamilyDescriptor>,
+	{
 		Self::open_cf_descriptors_internal(opts, path, cfs)
 	}
 
 	/// Internal implementation for opening RocksDB.
-	fn open_cf_descriptors_internal<P, I>(opts:&Options, path:P, cfs:I) -> Result<Self, Error>
+	fn open_cf_descriptors_internal<P, I>(opts: &Options, path: P, cfs: I) -> Result<Self, Error>
 	where
 		P: AsRef<Path>,
-		I: IntoIterator<Item = ColumnFamilyDescriptor>, {
-		let cfs:Vec<_> = cfs.into_iter().collect();
+		I: IntoIterator<Item = ColumnFamilyDescriptor>,
+	{
+		let cfs: Vec<_> = cfs.into_iter().collect();
 		let outlive = iter::once(opts.outlive.clone())
 			.chain(cfs.iter().map(|cf| cf.options.outlive.clone()))
 			.collect();
@@ -148,7 +148,7 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 			return Err(Error::new(format!("Failed to create RocksDB directory: `{e:?}`.")));
 		}
 
-		let db:*mut ffi::rocksdb_optimistictransactiondb_t;
+		let db: *mut ffi::rocksdb_optimistictransactiondb_t;
 		let mut cf_map = BTreeMap::new();
 
 		if cfs.is_empty() {
@@ -158,21 +158,21 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 			// Always open the default column family.
 			if !cfs_v.iter().any(|cf| cf.name == DEFAULT_COLUMN_FAMILY_NAME) {
 				cfs_v.push(ColumnFamilyDescriptor {
-					name:String::from(DEFAULT_COLUMN_FAMILY_NAME),
-					options:Options::default(),
-					ttl:ColumnFamilyTtl::SameAsDb,
+					name: String::from(DEFAULT_COLUMN_FAMILY_NAME),
+					options: Options::default(),
+					ttl: ColumnFamilyTtl::SameAsDb,
 				});
 			}
 			// We need to store our CStrings in an intermediate vector
 			// so that their pointers remain valid.
-			let c_cfs:Vec<CString> = cfs_v.iter().map(|cf| CString::new(cf.name.as_bytes()).unwrap()).collect();
+			let c_cfs: Vec<CString> = cfs_v.iter().map(|cf| CString::new(cf.name.as_bytes()).unwrap()).collect();
 
-			let cfnames:Vec<_> = c_cfs.iter().map(|cf| cf.as_ptr()).collect();
+			let cfnames: Vec<_> = c_cfs.iter().map(|cf| cf.as_ptr()).collect();
 
 			// These handles will be populated by DB.
-			let mut cfhandles:Vec<_> = cfs_v.iter().map(|_| ptr::null_mut()).collect();
+			let mut cfhandles: Vec<_> = cfs_v.iter().map(|_| ptr::null_mut()).collect();
 
-			let cfopts:Vec<_> = cfs_v.iter().map(|cf| cf.options.inner.cast_const()).collect();
+			let cfopts: Vec<_> = cfs_v.iter().map(|cf| cf.options.inner.cast_const()).collect();
 
 			db = Self::open_cf_raw(opts, &cpath, &cfs_v, &cfnames, &cfopts, &mut cfhandles)?;
 
@@ -208,7 +208,7 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 		))
 	}
 
-	fn open_raw(opts:&Options, cpath:&CString) -> Result<*mut ffi::rocksdb_optimistictransactiondb_t, Error> {
+	fn open_raw(opts: &Options, cpath: &CString) -> Result<*mut ffi::rocksdb_optimistictransactiondb_t, Error> {
 		unsafe {
 			let db = ffi_try!(ffi::rocksdb_optimistictransactiondb_open(opts.inner, cpath.as_ptr()));
 			Ok(db)
@@ -216,12 +216,12 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 	}
 
 	fn open_cf_raw(
-		opts:&Options,
-		cpath:&CString,
-		cfs_v:&[ColumnFamilyDescriptor],
-		cfnames:&[*const c_char],
-		cfopts:&[*const ffi::rocksdb_options_t],
-		cfhandles:&mut [*mut ffi::rocksdb_column_family_handle_t],
+		opts: &Options,
+		cpath: &CString,
+		cfs_v: &[ColumnFamilyDescriptor],
+		cfnames: &[*const c_char],
+		cfopts: &[*const ffi::rocksdb_options_t],
+		cfhandles: &mut [*mut ffi::rocksdb_column_family_handle_t],
 	) -> Result<*mut ffi::rocksdb_optimistictransactiondb_t, Error> {
 		unsafe {
 			let db = ffi_try!(ffi::rocksdb_optimistictransactiondb_open_column_families(
@@ -244,11 +244,11 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 	/// Creates a transaction with default options.
 	pub fn transaction_opt(
 		&self,
-		writeopts:&WriteOptions,
-		otxn_opts:&OptimisticTransactionOptions,
+		writeopts: &WriteOptions,
+		otxn_opts: &OptimisticTransactionOptions,
 	) -> Transaction<Self> {
 		Transaction {
-			inner:unsafe {
+			inner: unsafe {
 				ffi::rocksdb_optimistictransaction_begin(
 					self.inner.db,
 					writeopts.inner,
@@ -256,11 +256,11 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 					std::ptr::null_mut(),
 				)
 			},
-			_marker:PhantomData,
+			_marker: PhantomData,
 		}
 	}
 
-	pub fn write_opt(&self, batch:WriteBatchWithTransaction<true>, writeopts:&WriteOptions) -> Result<(), Error> {
+	pub fn write_opt(&self, batch: WriteBatchWithTransaction<true>, writeopts: &WriteOptions) -> Result<(), Error> {
 		unsafe {
 			ffi_try!(ffi::rocksdb_optimistictransactiondb_write(
 				self.inner.db,
@@ -271,11 +271,11 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 		Ok(())
 	}
 
-	pub fn write(&self, batch:WriteBatchWithTransaction<true>) -> Result<(), Error> {
+	pub fn write(&self, batch: WriteBatchWithTransaction<true>) -> Result<(), Error> {
 		self.write_opt(batch, &WriteOptions::default())
 	}
 
-	pub fn write_without_wal(&self, batch:WriteBatchWithTransaction<true>) -> Result<(), Error> {
+	pub fn write_without_wal(&self, batch: WriteBatchWithTransaction<true>) -> Result<(), Error> {
 		let mut wo = WriteOptions::new();
 		wo.disable_wal(true);
 		self.write_opt(batch, &wo)
@@ -283,12 +283,12 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 
 	/// Removes the database entries in the range `["from", "to")` using given
 	/// write options.
-	pub fn delete_range_cf_opt<K:AsRef<[u8]>>(
+	pub fn delete_range_cf_opt<K: AsRef<[u8]>>(
 		&self,
-		cf:&impl AsColumnFamilyRef,
-		from:K,
-		to:K,
-		writeopts:&WriteOptions,
+		cf: &impl AsColumnFamilyRef,
+		from: K,
+		to: K,
+		writeopts: &WriteOptions,
 	) -> Result<(), Error> {
 		let from = from.as_ref();
 		let to = to.as_ref();
@@ -309,7 +309,7 @@ impl<T:ThreadMode> OptimisticTransactionDB<T> {
 
 	/// Removes the database entries in the range `["from", "to")` using default
 	/// write options.
-	pub fn delete_range_cf<K:AsRef<[u8]>>(&self, cf:&impl AsColumnFamilyRef, from:K, to:K) -> Result<(), Error> {
+	pub fn delete_range_cf<K: AsRef<[u8]>>(&self, cf: &impl AsColumnFamilyRef, from: K, to: K) -> Result<(), Error> {
 		self.delete_range_cf_opt(cf, from, to, &WriteOptions::default())
 	}
 }
