@@ -1,42 +1,3 @@
-[package]
-name = "rocksdb"
-description = "Rust wrapper for Facebook's RocksDB embeddable database"
-version = "0.23.0"
-edition = "2024"
-rust-version = "1.85.0"
-authors = [
-	"Tyler Neely <t@jujit.su>",
-	"David Greenberg <dsg123456789@gmail.com>",
-]
-repository = "https://github.com/rust-rocksdb/rust-rocksdb"
-license = "Apache-2.0"
-categories = ["database"]
-keywords = ["database", "embedded", "LSM-tree", "persistence"]
-homepage = "https://github.com/rust-rocksdb/rust-rocksdb"
-exclude = [".gitignore", ".travis.yml", "deploy.sh", "test/**/*"]
-
-[workspace]
-members = ["librocksdb-sys"]
-exclude = []
-
-[features]
-default = ["snappy", "lz4", "zstd", "zlib", "bzip2", "bindgen-runtime"]
-jemalloc = ["librocksdb-sys/jemalloc"]
-io-uring = ["librocksdb-sys/io-uring"]
-valgrind = []
-mt_static = ["librocksdb-sys/mt_static"]
-snappy = ["librocksdb-sys/snappy"]
-lz4 = ["librocksdb-sys/lz4"]
-zstd = ["librocksdb-sys/zstd"]
-zlib = ["librocksdb-sys/zlib"]
-bzip2 = ["librocksdb-sys/bzip2"]
-rtti = ["librocksdb-sys/rtti"]
-multi-threaded-cf = []
-serde1 = ["serde"]
-bindgen-runtime = ["librocksdb-sys/bindgen-runtime"]
-bindgen-static = ["librocksdb-sys/bindgen-static"]
-lto = ["librocksdb-sys/lto"]
-
 [dependencies]
 libc = "0.2"
 librocksdb-sys = { path = "librocksdb-sys", version = "0.17.2+9.10.0", default-features = false, features = [
@@ -45,8 +6,47 @@ librocksdb-sys = { path = "librocksdb-sys", version = "0.17.2+9.10.0", default-f
 serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
-trybuild = "1"
-tempfile = "3.19"
-pretty_assertions = "1.4"
 bincode = "2.0"
+pretty_assertions = "1.4"
 serde = { version = "1", features = ["derive"] }
+tempfile = "3.19"
+trybuild = "1"
+
+[features]
+bindgen-runtime = ["librocksdb-sys/bindgen-runtime"]
+bindgen-static = ["librocksdb-sys/bindgen-static"]
+bzip2 = ["librocksdb-sys/bzip2"]
+default = ["snappy", "lz4", "zstd", "zlib", "bzip2", "bindgen-runtime"]
+io-uring = ["librocksdb-sys/io-uring"]
+jemalloc = ["librocksdb-sys/jemalloc"]
+lto = ["librocksdb-sys/lto"]
+lz4 = ["librocksdb-sys/lz4"]
+mt_static = ["librocksdb-sys/mt_static"]
+multi-threaded-cf = []
+rtti = ["librocksdb-sys/rtti"]
+serde1 = ["serde"]
+snappy = ["librocksdb-sys/snappy"]
+valgrind = []
+zlib = ["librocksdb-sys/zlib"]
+zstd = ["librocksdb-sys/zstd"]
+
+[package]
+authors = [
+	"Tyler Neely <t@jujit.su>",
+	"David Greenberg <dsg123456789@gmail.com>",
+]
+categories = ["database"]
+description = "Rust wrapper for Facebook's RocksDB embeddable database"
+edition = "2024"
+exclude = [".gitignore", ".travis.yml", "deploy.sh", "test/**/*"]
+homepage = "https://github.com/rust-rocksdb/rust-rocksdb"
+keywords = ["database", "embedded", "LSM-tree", "persistence"]
+license = "Apache-2.0"
+name = "rocksdb"
+repository = "https://github.com/rust-rocksdb/rust-rocksdb"
+rust-version = "1.85.0"
+version = "0.23.0"
+
+[workspace]
+exclude = []
+members = ["librocksdb-sys"]

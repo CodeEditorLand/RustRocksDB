@@ -1,53 +1,56 @@
-[package]
-name = "librocksdb-sys"
-version = "0.17.2+9.10.0"
-edition = "2024"
-rust-version = "1.85.0"
-authors = [
-	"Karl Hobley <karlhobley10@gmail.com>",
-	"Arkadiy Paronyan <arkadiy@ethcore.io>",
-]
-license = "MIT/Apache-2.0/BSD-3-Clause"
-description = "Native bindings to librocksdb"
-readme = "README.md"
-repository = "https://github.com/rust-rocksdb/rust-rocksdb"
-keywords = ["bindings", "ffi", "rocksdb"]
-categories = ["api-bindings", "database", "external-ffi-bindings"]
-links = "rocksdb"
-
-[features]
-default = ["static", "bindgen/runtime"]
-jemalloc = ["tikv-jemalloc-sys"]
-static = ["libz-sys?/static", "bzip2-sys?/static"]
-bindgen-runtime = ["bindgen/runtime"]
-bindgen-static = ["bindgen/static"]
-mt_static = []
-io-uring = ["pkg-config"]
-snappy = []
-lz4 = ["lz4-sys"]
-zstd = ["zstd-sys"]
-zlib = ["libz-sys"]
-bzip2 = ["bzip2-sys"]
-rtti = []
-lto = []
+[build-dependencies]
+bindgen = { version = "0.71.1", default-features = false }
+cc = { version = "1.2", features = ["parallel"] }
+pkg-config = { version = "0.3", optional = true }
+regex = "1.11.1"
 
 [dependencies]
+bzip2-sys = { version = "0.1", default-features = false, optional = true }
 libc = "0.2"
+libz-sys = { version = "1.1", default-features = false, optional = true }
+lz4-sys = { version = "1.11", optional = true }
 tikv-jemalloc-sys = { version = "0.6", features = [
 	"unprefixed_malloc_on_supported_platforms",
 ], optional = true }
-lz4-sys = { version = "1.11", optional = true }
 zstd-sys = { version = "2.0", features = [
 	"zdict_builder",
 ], optional = true }
-libz-sys = { version = "1.1", default-features = false, optional = true }
-bzip2-sys = { version = "0.1", default-features = false, optional = true }
 
 [dev-dependencies]
 uuid = { version = "1.16", features = ["v4"] }
 
-[build-dependencies]
-cc = { version = "1.2", features = ["parallel"] }
-bindgen = { version = "0.71.1", default-features = false }
-pkg-config = { version = "0.3", optional = true }
-regex = "1.11.1"
+[features]
+bindgen-runtime = ["bindgen/runtime"]
+bindgen-static = ["bindgen/static"]
+bzip2 = ["bzip2-sys"]
+default = ["static", "bindgen/runtime"]
+io-uring = ["pkg-config"]
+jemalloc = ["tikv-jemalloc-sys"]
+lto = []
+lz4 = ["lz4-sys"]
+mt_static = []
+rtti = []
+snappy = []
+static = ["libz-sys?/static", "bzip2-sys?/static"]
+zlib = ["libz-sys"]
+zstd = ["zstd-sys"]
+
+[lib]
+path = "src/lib.rs"
+
+[package]
+authors = [
+	"Karl Hobley <karlhobley10@gmail.com>",
+	"Arkadiy Paronyan <arkadiy@ethcore.io>",
+]
+categories = ["api-bindings", "database", "external-ffi-bindings"]
+description = "Native bindings to librocksdb"
+edition = "2024"
+keywords = ["bindings", "ffi", "rocksdb"]
+license = "MIT/Apache-2.0/BSD-3-Clause"
+links = "rocksdb"
+name = "librocksdb-sys"
+readme = "README.md"
+repository = "https://github.com/rust-rocksdb/rust-rocksdb"
+rust-version = "1.85.0"
+version = "0.17.2+9.10.0"
