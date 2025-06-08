@@ -44,7 +44,7 @@ keywords = ["database", "embedded", "LSM-tree", "persistence"]
 license = "Apache-2.0"
 name = "rocksdb"
 repository = "https://github.com/rust-rocksdb/rust-rocksdb"
-rust-version = "1.85.0"
+rust-version = "1.89.0"
 version = "0.23.0"
 
 [workspace]
